@@ -11,5 +11,7 @@
 namespace mnn {
 namespace kernels {
 
+void conv2d_op_gpu() {}
+
 }  // namespace kernels
 }  // namespace mnn

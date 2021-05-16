@@ -13,14 +13,14 @@
 #include <type_traits>
 
 #include "mnn/infra/config.h"
-#include "mnn/infra/nn_error.h"
+#include "mnn/infra/mnn_error.h"
 
 namespace mnn {
 //
-class random_generator {
+class RandomGenerator {
  public:
-  static random_generator &get_instance() {
-    static random_generator instance;
+  static RandomGenerator &get_instance() {
+    static RandomGenerator instance;
     return instance;
   }
 
@@ -31,7 +31,7 @@ class random_generator {
  private:
   // avoid gen_(0) for MSVC known issue
   // https://connect.microsoft.com/VisualStudio/feedback/details/776456
-  random_generator() : gen_(1) {}
+  RandomGenerator() : gen_(1) {}
   std::mt19937 gen_;
 };
 //
@@ -39,21 +39,21 @@ template <typename T>
 inline typename std::enable_if<std::is_integral<T>::value, T>::type
 uniform_rand(T min, T max) {
   std::uniform_int_distribution<T> dst(min, max);
-  return dst(random_generator::get_instance()());
+  return dst(RandomGenerator::get_instance()());
 }
 
 template <typename T>
 inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
 uniform_rand(T min, T max) {
   std::uniform_real_distribution<T> dst(min, max);
-  return dst(random_generator::get_instance()());
+  return dst(RandomGenerator::get_instance()());
 }
 
 template <typename T>
 inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
 gaussian_rand(T mean, T sigma) {
   std::normal_distribution<T> dst(mean, sigma);
-  return dst(random_generator::get_instance()());
+  return dst(RandomGenerator::get_instance()());
 }
 
 template <typename Container>
@@ -62,12 +62,12 @@ inline int uniform_idx(const Container &t) {
 }
 
 template <typename Iter>
-void uniform_rand(Iter begin, Iter end, float_t min, float_t max) {
+void uniform_rand(Iter begin, Iter end, Float min, Float max) {
   for (Iter it = begin; it != end; ++it) *it = uniform_rand(min, max);
 }
 
 template <typename Iter>
-void gaussian_rand(Iter begin, Iter end, float_t mean, float_t sigma) {
+void gaussian_rand(Iter begin, Iter end, Float mean, Float sigma) {
   for (Iter it = begin; it != end; ++it) *it = gaussian_rand(mean, sigma);
 }
 

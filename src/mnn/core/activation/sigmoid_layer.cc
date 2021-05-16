@@ -13,29 +13,29 @@
 
 namespace mnn {
 
-std::string sigmoid_layer::layer_type() const
+std::string SigmoidLayer::layer_type() const
 {
     return "sigmoid-activation";
 }
 
-void sigmoid_layer::forward_activation(const vec_t &x, vec_t &y)
+void SigmoidLayer::forward_activation(const Vector &x, Vector &y)
 {
     for (size_t j = 0; j < x.size(); j++) {
-        y[j] = float_t(1) / (float_t(1) + std::exp(-x[j]));
+        y[j] = Float(1) / (Float(1) + std::exp(-x[j]));
     }
 }
 
-void sigmoid_layer::backward_activation(const vec_t &x, const vec_t &y,
-        vec_t &dx, const vec_t &dy)
+void SigmoidLayer::backward_activation(const Vector &x, const Vector &y,
+        Vector &dx, const Vector &dy)
 {
     for (size_t j = 0; j < x.size(); j++) {
         // dx = dy * (gradient of sigmoid)
-        dx[j] = dy[j] * y[j] * (float_t(1) - y[j]);
+        dx[j] = dy[j] * y[j] * (Float(1) - y[j]);
     }
 }
 
-std::pair<float_t, float_t> sigmoid_layer::scale() const
+std::pair<Float, Float> SigmoidLayer::scale() const
 {
-    return std::make_pair(float_t(0.1), float_t(0.9));
+    return std::make_pair(Float(0.1), Float(0.9));
 }
 }  // namespace mnn

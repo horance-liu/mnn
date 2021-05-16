@@ -12,14 +12,14 @@
 
 namespace mnn {
 
-struct gradient_descent: public optimizer {
-    gradient_descent();
+struct GradientDescent: public Optimizer {
+    GradientDescent();
 
-    void update(const vec_t &dW, vec_t &W, bool parallelize);
+    void update(const Vector &dW, Vector &W, bool parallelize);
 
 private:
-    float_t alpha;   // learning rate
-    float_t lambda;  // weight decay
+    Float alpha;   // learning rate
+    Float lambda;  // weight decay
 };
 
 }  // namespace mnn

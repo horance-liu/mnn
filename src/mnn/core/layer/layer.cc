@@ -6,27 +6,27 @@
  *   in the LICENSE file.
  */
 
-#include "mnn/core/layer/layer.h"
 #include "mnn/core/graph/edge.h"
 #include "mnn/core/graph/node.h"
+#include "mnn/core/layer/layer.h"
 #include "mnn/infra/backend.h"
 
 #include <iomanip>
 
 namespace mnn {
 
-void layer::alloc_input(size_t i) const
+void Layer::alloc_input(size_t i) const
 {
-    prev_[i] = std::make_shared<edge>(nullptr, in_shape()[i], in_type_[i]);
+    prev_[i] = std::make_shared<Edge>(nullptr, in_shape()[i], in_type_[i]);
 }
 
-void layer::alloc_output(size_t i) const
+void Layer::alloc_output(size_t i) const
 {
-    next_[i] = std::make_shared<edge>(const_cast<layer*>(this),
+    next_[i] = std::make_shared<Edge>(const_cast<Layer*>(this),
             out_shape()[i], out_type_[i]);
 }
 
-edgeptr_t layer::ith_in_node(size_t i)
+edgeptr_t Layer::ith_in_node(size_t i)
 {
     // in case that the  edge doesn't exist, we create it
     if (!prev_[i])
@@ -34,100 +34,100 @@ edgeptr_t layer::ith_in_node(size_t i)
     return prev()[i];
 }
 
-edgeptr_t layer::ith_out_node(size_t i)
+edgeptr_t Layer::ith_out_node(size_t i)
 {
     // in case that the  edge doesn't exist, we create it
     if (!next_[i])
         alloc_output(i);
     return next()[i];
 }
-edgeptr_t layer::ith_out_node(size_t i) const
+edgeptr_t Layer::ith_out_node(size_t i) const
 {
     return next()[i];
 }
 
-vec_t* layer::get_weight_data(size_t i)
+Vector* Layer::get_weight_data(size_t i)
 {
     assert(is_trainable_weight(in_type_[i]));
     return &(*(ith_in_node(i)->get_data()))[0];
 }
 
-const vec_t* layer::get_weight_data(size_t i) const
+const Vector* Layer::get_weight_data(size_t i) const
 {
     assert(is_trainable_weight(in_type_[i]));
-    return &(*(const_cast<layer*>(this)->ith_in_node(i)->get_data()))[0];
+    return &(*(const_cast<Layer*>(this)->ith_in_node(i)->get_data()))[0];
 }
 
-layer::layer(const std::vector<vector_type> &in_type,
-        const std::vector<vector_type> &out_type) : node(in_type.size(),
+Layer::Layer(const std::vector<VectorType> &in_type,
+        const std::vector<VectorType> &out_type) : Node(in_type.size(),
         out_type.size()), initialized_(false), parallelize_(true), in_channels_(
         in_type.size()), out_channels_(out_type.size()), in_type_(in_type), out_type_(
-        out_type), backend_type_(backend_t::cpu)
+        out_type), backend_type_(BackendType::CPU)
 {
-    weight_init_ = std::make_shared<weight_init::xavier>();
-    bias_init_ = std::make_shared<weight_init::constant>();
+    weight_init_ = std::make_shared<weight_init::Xavier>();
+    bias_init_ = std::make_shared<weight_init::Constant>();
     trainable_ = true;
 }
 
-void layer::set_parallelize(bool parallelize)
+void Layer::set_parallelize(bool parallelize)
 {
     parallelize_ = parallelize;
 }
 
-void layer::set_backend_type(backend_t backend_type)
+void Layer::set_backend_type(BackendType backend_type)
 {
     backend_type_ = backend_type;
 }
 
-bool layer::parallelize() const
+bool Layer::parallelize() const
 {
     return parallelize_;
 }
-backend_t layer::engine() const
+BackendType Layer::engine() const
 {
     return backend_type_;
 }
 
-size_t layer::in_channels() const
+size_t Layer::in_channels() const
 {
     return in_channels_;
 }
-size_t layer::out_channels() const
+size_t Layer::out_channels() const
 {
     return out_channels_;
 }
 
-size_t layer::in_data_size() const
+size_t Layer::in_data_size() const
 {
     return sumif(in_shape(), [&](size_t i) {  // NOLINT
-                return in_type_[i] == vector_type::data;
-            }, [](const shape3d &s) {return s.size();});
+                return in_type_[i] == VectorType::DATA;
+            }, [](const Shape3d &s) {return s.size();});
 }
 
-size_t layer::out_data_size() const
+size_t Layer::out_data_size() const
 {
     return sumif(out_shape(), [&](size_t i) {  // NOLINT
-                return out_type_[i] == vector_type::data;
-            }, [](const shape3d &s) {return s.size();});
+                return out_type_[i] == VectorType::DATA;
+            }, [](const Shape3d &s) {return s.size();});
 }
 
-std::vector<shape3d> layer::in_data_shape()
+std::vector<Shape3d> Layer::in_data_shape()
 {
     return filter(in_shape(), [&](size_t i) {  // NOLINT
-                return in_type_[i] == vector_type::data;
+                return in_type_[i] == VectorType::DATA;
             });
 }
 
-std::vector<shape3d> layer::out_data_shape()
+std::vector<Shape3d> Layer::out_data_shape()
 {
     return filter(out_shape(), [&](size_t i) {  // NOLINT
-                return out_type_[i] == vector_type::data;
+                return out_type_[i] == VectorType::DATA;
             });
 }
 
-std::vector<const vec_t*> layer::weights() const
+std::vector<const Vector*> Layer::weights() const
 {
-    std::vector<const vec_t*> v;
+    std::vector<const Vector*> v;
     for (size_t i = 0; i < in_channels_; i++) {
         if (is_trainable_weight(in_type_[i])) {
             v.push_back(get_weight_data(i));
@@ -136,9 +136,9 @@ std::vector<const vec_t*> layer::weights() const
     return v;
 }
 
-std::vector<vec_t*> layer::weights()
+std::vector<Vector*> Layer::weights()
 {
-    std::vector<vec_t*> v;
+    std::vector<Vector*> v;
     for (size_t i = 0; i < in_channels_; i++) {
         if (is_trainable_weight(in_type_[i])) {
             v.push_back(get_weight_data(i));
@@ -147,9 +147,9 @@ std::vector<vec_t*> layer::weights()
     return v;
 }
 
-std::vector<tensor_t*> layer::weights_grads()
+std::vector<Matrix*> Layer::weights_grads()
 {
-    std::vector<tensor_t*> v;
+    std::vector<Matrix*> v;
     for (size_t i = 0; i < in_channels_; i++) {
         if (is_trainable_weight(in_type_[i])) {
             v.push_back(ith_in_node(i)->get_gradient());
@@ -158,7 +158,7 @@ std::vector<tensor_t*> layer::weights_grads()
     return v;
 }
 
-std::vector<edgeptr_t> layer::inputs()
+std::vector<edgeptr_t> Layer::inputs()
 {
     std::vector<edgeptr_t> nodes(in_channels_);
     for (size_t i = 0; i < in_channels_; i++) {
@@ -167,7 +167,7 @@ std::vector<edgeptr_t> layer::inputs()
     return nodes;
 }
 
-std::vector<edgeptr_t> layer::outputs()
+std::vector<edgeptr_t> Layer::outputs()
 {
     std::vector<edgeptr_t> nodes(out_channels_);
     for (size_t i = 0; i < out_channels_; i++) {
@@ -176,23 +176,23 @@ std::vector<edgeptr_t> layer::outputs()
     return nodes;
 }
 
-std::vector<edgeptr_t> layer::outputs() const
+std::vector<edgeptr_t> Layer::outputs() const
 {
     std::vector<edgeptr_t> nodes(out_channels_);
     for (size_t i = 0; i < out_channels_; i++) {
-        nodes[i] = const_cast<layer*>(this)->ith_out_node(i);
+        nodes[i] = const_cast<Layer*>(this)->ith_out_node(i);
     }
     return nodes;
 }
 
-void layer::set_out_grads(const std::vector<const vec_t*> *grad, size_t cnt)
+void Layer::set_out_grads(const std::vector<const Vector*> *grad, size_t cnt)
 {
     MNN_UNREFERENCED_PARAMETER(cnt);
     size_t n = 0;
     for (size_t i = 0; i < out_channels_; i++) {
-        if (out_type_[i] != vector_type::data)
+        if (out_type_[i] != VectorType::DATA)
             continue;
-        tensor_t &dst_grad = *ith_out_node(i)->get_gradient();
+        Matrix &dst_grad = *ith_out_node(i)->get_gradient();
         assert(n < cnt);
         const auto &src_grad = grad[n++];
         size_t sz = src_grad.size();
@@ -204,14 +204,14 @@ void layer::set_out_grads(const std::vector<const vec_t*> *grad, size_t cnt)
     }
 }
 
-void layer::set_in_data(const std::vector<const vec_t*> *data, size_t cnt)
+void Layer::set_in_data(const std::vector<const Vector*> *data, size_t cnt)
 {
     MNN_UNREFERENCED_PARAMETER(cnt);
     size_t n = 0;
     for (size_t i = 0; i < in_channels_; i++) {
-        if (in_type_[i] != vector_type::data)
+        if (in_type_[i] != VectorType::DATA)
             continue;
-        tensor_t &dst_data = *ith_in_node(i)->get_data();
+        Matrix &dst_data = *ith_in_node(i)->get_data();
         size_t in_size = ith_in_node(i)->shape().size();
         assert(n < cnt);
         const auto &src_data = data[n++];
@@ -227,48 +227,48 @@ void layer::set_in_data(const std::vector<const vec_t*> *data, size_t cnt)
     }
 }
 
-void layer::output(std::vector<const tensor_t*> &out) const
+void Layer::output(std::vector<const Matrix*> &out) const
 {
     out.clear();
     for (size_t i = 0; i < out_channels_; i++) {
-        if (out_type_[i] == vector_type::data) {
+        if (out_type_[i] == VectorType::DATA) {
             out.push_back(ith_out_node(i)->get_data());
         }
     }
 }
 
-void layer::set_in_shape(const shape3d &in_shape)
+void Layer::set_in_shape(const Shape3d &in_shape)
 {
     MNN_UNREFERENCED_PARAMETER(in_shape);
-    throw nn_error("Can't set shape. Shape inferring not applicable for this "
+    throw MnnError("Can't set shape. Shape inferring not applicable for this "
             "layer (yet).");
 }
 
-size_t layer::fan_in_size() const
+size_t Layer::fan_in_size() const
 {
     return in_shape()[0].width_;
 }
 
-size_t layer::fan_in_size(size_t) const
+size_t Layer::fan_in_size(size_t) const
 {
     return fan_in_size();  // fallback to single weight matrix.
 }
 
-size_t layer::fan_out_size() const
+size_t Layer::fan_out_size() const
 {
     return out_shape()[0].width_;
 }
 
-size_t layer::fan_out_size(size_t) const
+size_t Layer::fan_out_size(size_t) const
 {
     return fan_out_size();  // fallback to single weight matrix
 }
 
-std::vector<tensor_t> layer::backward(const std::vector<tensor_t> &out_grads)
+std::vector<Matrix> Layer::backward(const std::vector<Matrix> &out_grads)
 {  // for test
     setup(false);
 
-    std::vector<std::vector<const vec_t*>> grads2;
+    std::vector<std::vector<const Vector*>> grads2;
     grads2.resize(out_grads.size());
     for (size_t i = 0; i < out_grads.size(); ++i) {
         grads2[i].resize(out_grads[i].size());
@@ -279,11 +279,11 @@ std::vector<tensor_t> layer::backward(const std::vector<tensor_t> &out_grads)
 
     set_out_grads(&grads2[0], grads2.size());
     backward();
-    return map_<tensor_t>(inputs(),
+    return map_<Matrix>(inputs(),
             [](edgeptr_t e) {return *e->get_gradient();});
 }
 
-void layer::forward()
+void Layer::forward()
 {
     fwd_in_data_.resize(in_channels_);
     fwd_out_data_.resize(out_channels_);
@@ -302,7 +302,7 @@ void layer::forward()
     forward_propagation(fwd_in_data_, fwd_out_data_);
 }
 
-void layer::backward()
+void Layer::backward()
 {
     bwd_in_data_.resize(in_channels_);
     bwd_in_grad_.resize(in_channels_);
@@ -323,16 +323,16 @@ void layer::backward()
     back_propagation(bwd_in_data_, bwd_out_data_, bwd_out_grad_, bwd_in_grad_);
 }
 
-void layer::setup(bool reset_weight)
+void Layer::setup(bool reset_weight)
 {
     if (in_shape().size() != in_channels_
             || out_shape().size() != out_channels_) {
-        throw nn_error("Connection mismatch at setup layer");
+        throw MnnError("Connection mismatch at setup layer");
     }
 
     for (size_t i = 0; i < out_channels_; i++) {
         if (!next_[i]) {
-            next_[i] = std::make_shared<edge>(this, out_shape()[i],
+            next_[i] = std::make_shared<Edge>(this, out_shape()[i],
                     out_type_[i]);
         }
     }
@@ -342,7 +342,7 @@ void layer::setup(bool reset_weight)
     }
 }
 
-void layer::init_weight()
+void Layer::init_weight()
 {
     if (!trainable_) {
         initialized_ = true;
@@ -351,11 +351,11 @@ void layer::init_weight()
 
     for (size_t i = 0; i < in_channels_; i++) {
         switch (in_type_[i]) {
-        case vector_type::weight:
+        case VectorType::WEIGHT:
             weight_init_->fill(get_weight_data(i), fan_in_size(i),
                     fan_out_size(i));
             break;
-        case vector_type::bias:
+        case VectorType::BIAS:
             bias_init_->fill(get_weight_data(i), fan_in_size(i),
                     fan_out_size(i));
             break;
@@ -366,22 +366,22 @@ void layer::init_weight()
     initialized_ = true;
 }
 
-void layer::clear_grads()
+void Layer::clear_grads()
 {
     for (size_t i = 0; i < in_type_.size(); i++) {
         ith_in_node(i)->clear_grads();
     }
 }
 
-void layer::update_weight(optimizer *o)
+void Layer::update_weight(Optimizer *o)
 {
     auto &diff = weights_diff_;
     for (size_t i = 0; i < in_type_.size(); i++) {
         if (trainable() && is_trainable_weight(in_type_[i])) {
-            vec_t &target = *get_weight_data(i);
+            Vector &target = *get_weight_data(i);
             ith_in_node(i)->merge_grads(&diff);
-            float_t rcp_batch_size = float_t(1.0)
-                    / float_t(ith_in_node(i)->get_data()->size());
+            Float rcp_batch_size = Float(1.0)
+                    / Float(ith_in_node(i)->get_data()->size());
             for (size_t j = 0; j < diff.size(); ++j) {
                 diff[j] *= rcp_batch_size;
             }
@@ -393,7 +393,7 @@ void layer::update_weight(optimizer *o)
     post_update();
 }
 
-bool layer::has_same_weights(const layer &rhs, float_t eps) const
+bool Layer::has_same_weights(const Layer &rhs, Float eps) const
 {
     auto w1 = weights();
     auto w2 = rhs.weights();
@@ -412,9 +412,9 @@ bool layer::has_same_weights(const layer &rhs, float_t eps) const
     return true;
 }
 
-void layer::set_sample_count(size_t sample_count)
+void Layer::set_sample_count(size_t sample_count)
 {
-    auto resize = [sample_count](tensor_t *tensor) {
+    auto resize = [sample_count](Matrix *tensor) {
         tensor->resize(sample_count, (*tensor)[0]);
     };
 
@@ -433,18 +433,18 @@ void layer::set_sample_count(size_t sample_count)
     }
 }
 
-std::vector<vector_type> layer::in_types() const { return in_type_; }
-std::vector<vector_type> layer::out_types() const { return out_type_; }
+std::vector<VectorType> Layer::in_types() const { return in_type_; }
+std::vector<VectorType> Layer::out_types() const { return out_type_; }
 
-void layer::set_trainable(bool trainable) { trainable_ = trainable; }
+void Layer::set_trainable(bool trainable) { trainable_ = trainable; }
 
-bool layer::trainable() const { return trainable_; }
+bool Layer::trainable() const { return trainable_; }
 
-std::pair<float_t, float_t> layer::out_value_range() const {
-  return {float_t{0.0}, float_t{1.0}};
+std::pair<Float, Float> Layer::out_value_range() const {
+  return {Float{0.0}, Float{1.0}};
 }
 
-void connect(layer *head, layer *tail, size_t head_index = 0,
+void connect(Layer *head, Layer *tail, size_t head_index = 0,
         size_t tail_index = 0)
 {
     auto out_shape = head->out_shape()[head_index];
@@ -462,20 +462,20 @@ void connect(layer *head, layer *tail, size_t head_index = 0,
     }
 
     if (!head->next_[head_index]) {
-        throw nn_error("output edge must not be null");
+        throw MnnError("output edge must not be null");
     }
 
     tail->prev_[tail_index] = head->next_[head_index];
     tail->prev_[tail_index]->add_next_node(tail);
 }
 
-layer& operator<<(layer &lhs, layer &rhs)
+Layer& operator<<(Layer &lhs, Layer &rhs)
 {
     connect(&lhs, &rhs);
     return rhs;
 }
 
-void data_mismatch(const layer &layer, const vec_t &data)
+void data_mismatch(const Layer &layer, const Vector &data)
 {
     std::ostringstream os;
 
@@ -486,7 +486,7 @@ void data_mismatch(const layer &layer, const vec_t &data)
 
     std::string detail_info = os.str();
 
-    throw nn_error("input dimension mismatch!" + detail_info);
+    throw MnnError("input dimension mismatch!" + detail_info);
 }
 
 void pooling_size_mismatch(size_t in_width, size_t in_height,
@@ -501,10 +501,10 @@ void pooling_size_mismatch(size_t in_width, size_t in_height,
 
     std::string detail_info = os.str();
 
-    throw nn_error("width/height not multiple of pooling size" + detail_info);
+    throw MnnError("width/height not multiple of pooling size" + detail_info);
 }
 
-void connection_mismatch(const layer &from, const layer &to)
+void connection_mismatch(const Layer &from, const Layer &to)
 {
     std::ostringstream os;
 
@@ -522,7 +522,7 @@ void connection_mismatch(const layer &from, const layer &to)
     os << from.out_data_size() << " != " << to.in_data_size() << std::endl;
     std::string detail_info = os.str();
 
-    throw nn_error("layer dimension mismatch!" + detail_info);
+    throw MnnError("layer dimension mismatch!" + detail_info);
 }
 
 }  // namespace mnn

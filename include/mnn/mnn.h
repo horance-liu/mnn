@@ -8,9 +8,11 @@
 
 #pragma once
 
-#include "mnn/infra/config.h"
+#include "mnn/core/graph/node_list.h"
+#include "mnn/core/layer/convolutional_layer.h"
+#include "mnn/core/layer/fully_connected_layer.h"
 #include "mnn/core/graph/network.h"
-#include "mnn/core/graph/nodes.h"
+#include "mnn/infra/config.h"
 #include "mnn/core/graph/tensor.h"
 
 #include "mnn/core/activation/relu_layer.h"
@@ -19,9 +21,6 @@
 #include "mnn/core/activation/tanh_layer.h"
 
 #include "mnn/core/layer/average_pooling_layer.h"
-#include "mnn/core/layer/convolutional_layer.h"
-#include "mnn/core/layer/fully_connected_layer.h"
-
 #include "mnn/core/loss/mse.h"
 #include "mnn/core/loss/cross_entropy.h"
 
@@ -35,20 +34,21 @@
 #include "mnn/infra/timer.h"
 
 namespace mnn {
-namespace layers {
 
-using conv = mnn::convolutional_layer;
-using ave_pool = mnn::average_pooling_layer;
-using fc = mnn::fully_connected_layer;
+namespace layer {
 
-}  // namespace layers
+using conv = mnn::ConvolutionalLayer;
+using ave_pool = mnn::AveragePoolingLayer;
+using fc = mnn::FullyConnectedLayer;
+
+}  // namespace layer
 
 namespace activation {
 
-using sigmoid = mnn::sigmoid_layer;
-using tanh = mnn::tanh_layer;
-using relu = mnn::relu_layer;
-using softmax = mnn::softmax_layer;
+using sigmoid = mnn::SigmoidLayer;
+using tanh = mnn::TanhLayer;
+using relu = mnn::ReluLayer;
+using softmax = mnn::SoftmaxLayer;
 
 }  // namespace activation
 

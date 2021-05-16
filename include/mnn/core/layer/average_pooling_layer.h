@@ -12,37 +12,37 @@
 
 namespace mnn {
 
-class average_pooling_layer: public partial_connected_layer {
+class AveragePoolingLayer: public PartialConnectedLayer {
 public:
-    using Base = partial_connected_layer;
+    using Base = PartialConnectedLayer;
 
-    average_pooling_layer(size_t in_width, size_t in_height, size_t in_channels,
+    AveragePoolingLayer(size_t in_width, size_t in_height, size_t in_channels,
             size_t pool_size, bool ceil_mode = false);
 
-    average_pooling_layer(const shape3d &in_shape, size_t pool_size,
+    AveragePoolingLayer(const Shape3d &in_shape, size_t pool_size,
             size_t stride, bool ceil_mode = false);
 
-    average_pooling_layer(size_t in_width, size_t in_height, size_t in_channels,
+    AveragePoolingLayer(size_t in_width, size_t in_height, size_t in_channels,
             size_t pool_size, size_t stride, bool ceil_mode = false);
 
-    average_pooling_layer(size_t in_width, size_t in_height, size_t in_channels,
+    AveragePoolingLayer(size_t in_width, size_t in_height, size_t in_channels,
             size_t pool_size_x, size_t pool_size_y, size_t stride_x,
-            size_t stride_y, bool ceil_mode = false, padding pad_type =
-                    padding::valid);
+            size_t stride_y, bool ceil_mode = false, Padding pad_type =
+                    Padding::VALID);
 
-    std::vector<index3d<size_t>> in_shape() const override;
-    std::vector<index3d<size_t>> out_shape() const override;
+    std::vector<Index3d<size_t>> in_shape() const override;
+    std::vector<Index3d<size_t>> out_shape() const override;
     std::string layer_type() const override;
 
     void forward_propagation(
-            const std::vector<tensor_t*> &in_data,
-            std::vector<tensor_t*> &out_data) override;
+            const std::vector<Matrix*> &in_data,
+            std::vector<Matrix*> &out_data) override;
 
     void back_propagation(
-            const std::vector<tensor_t*> &in_data,
-            const std::vector<tensor_t*> &out_data,
-            std::vector<tensor_t*> &out_grad,
-            std::vector<tensor_t*> &in_grad) override;
+            const std::vector<Matrix*> &in_data,
+            const std::vector<Matrix*> &out_data,
+            std::vector<Matrix*> &out_grad,
+            std::vector<Matrix*> &in_grad) override;
 
     std::pair<size_t, size_t> pool_size() const;
 
@@ -51,9 +51,9 @@ private:
     size_t stride_y_;
     size_t pool_size_x_;
     size_t pool_size_y_;
-    shape3d in_;
-    shape3d out_;
-    shape3d w_;
+    Shape3d in_;
+    Shape3d out_;
+    Shape3d w_;
 
     static size_t pool_out_dim(size_t in_size, size_t pooling_size,size_t stride);
 

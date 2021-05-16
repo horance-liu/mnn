@@ -10,82 +10,82 @@
 
 namespace mnn {
 
-edge::edge(node *prev, const shape3d &shape, vector_type vtype) : shape_(shape), vtype_(
-        vtype), data_( { vec_t(shape.size()) }), grad_(
-        { vec_t(shape.size()) }), prev_(prev)
+Edge::Edge(Node *prev, const Shape3d &shape, VectorType vtype) : shape_(shape), vtype_(
+        vtype), data_( { Vector(shape.size()) }), grad_(
+        { Vector(shape.size()) }), prev_(prev)
 {
 }
 
-void edge::merge_grads(vec_t *dst)
+void Edge::merge_grads(Vector *dst)
 {
     assert(!grad_.empty());
     const auto &grad_head = grad_[0];
     size_t sz = grad_head.size();
     dst->resize(sz);
-    float_t *pdst = &(*dst)[0];
+    Float *pdst = &(*dst)[0];
     // dst = grad_[0]
     std::copy(grad_head.begin(), grad_head.end(), pdst);
     // @todo consider adding parallelism
     for (size_t sample = 1, sample_count = grad_.size(); sample < sample_count;
             ++sample) {
         // dst += grad_[sample]
-        vectorize::reduce < float_t > (&grad_[sample][0], sz, pdst);
+        vectorize::reduce < Float > (&grad_[sample][0], sz, pdst);
     }
 }
 
-void edge::clear_grads()
+void Edge::clear_grads()
 {
     for (size_t sample = 0, sample_count = grad_.size(); sample < sample_count;
             ++sample) {
         auto &g = grad_[sample];
-        vectorize::fill(&g[0], g.size(), float_t { 0 });
+        vectorize::fill(&g[0], g.size(), Float { 0 });
     }
 }
 
-tensor_t* edge::get_data()
+Matrix* Edge::get_data()
 {
     return &data_;
 }
 
-const tensor_t* edge::get_data() const
+const Matrix* Edge::get_data() const
 {
     return &data_;
 }
 
-tensor_t* edge::get_gradient()
+Matrix* Edge::get_gradient()
 {
     return &grad_;
 }
 
-const tensor_t* edge::get_gradient() const
+const Matrix* Edge::get_gradient() const
 {
     return &grad_;
 }
 
-const std::vector<node*>& edge::next() const
+const std::vector<Node*>& Edge::next() const
 {
     return next_;
 }
-node* edge::prev()
+Node* Edge::prev()
 {
     return prev_;
 }
-const node* edge::prev() const
+const Node* Edge::prev() const
 {
     return prev_;
 }
 
-const shape3d& edge::shape() const
+const Shape3d& Edge::shape() const
 {
     return shape_;
 }
 
-vector_type edge::vtype() const
+VectorType Edge::vtype() const
 {
     return vtype_;
 }
 
-void edge::add_next_node(node *next)
+void Edge::add_next_node(Node *next)
 {
     next_.push_back(next);
 }

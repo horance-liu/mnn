@@ -9,17 +9,17 @@
 
 namespace mnn {
 
-class conv_params;
-class fully_params;
-class maxpool_params;
+class ConvParams;
+class FullyParams;
+class MaxpoolParams;
 
 class Params {
  public:
   Params() {}
 
-  conv_params &conv();
-  fully_params &fully();
-  maxpool_params &maxpool();
+  ConvParams &conv();
+  FullyParams &fully();
+  MaxpoolParams &maxpool();
 };
 
 }  // namespace mnn

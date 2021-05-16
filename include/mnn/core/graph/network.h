@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "mnn/core/graph/node_list.h"
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
@@ -22,24 +23,21 @@
 #include <vector>
 
 #include "mnn/core/loss/apply_grad.h"
-#include "mnn/core/graph/sequential.h"
-#include "mnn/core/graph/nodes.h"
 #include "mnn/infra/util.h"
+#include "mnn/core/graph/sequential.h"
 
 namespace mnn {
 
-enum class content_type {
+enum class ContentType {
   weights,           ///< save/load the weights
   model,             ///< save/load the network architecture
   weights_and_model  ///< save/load both the weights and the architecture
 };
 
-enum class file_format { binary, portable_binary, json };
+struct Result {
+  Result() : num_success(0), num_total(0) {}
 
-struct result {
-  result() : num_success(0), num_total(0) {}
-
-  float_t accuracy() const { return float_t(num_success * 100.0 / num_total); }
+  Float accuracy() const { return Float(num_success * 100.0 / num_total); }
 
   template <typename Char, typename CharTraits>
   void print_detail(std::basic_ostream<Char, CharTraits> &os) const {
@@ -49,22 +47,22 @@ struct result {
 
   int num_success;
   int num_total;
-  std::map<label_t, std::map<label_t, int>> confusion_matrix;
+  std::map<Label, std::map<Label, int>> confusion_matrix;
 };
 
 template <typename NetType>
-class network;
+class Network;
 
 template <typename Layer>
-network<sequential> &operator<<(network<sequential> &n, Layer &&l);
+Network<Sequential> &operator<<(Network<Sequential> &n, Layer &&l);
 
 template <typename NetType>
-class network {
+class Network {
  public:
-  typedef typename std::vector<layer *>::iterator iterator;
-  typedef typename std::vector<layer *>::const_iterator const_iterator;
+  typedef typename std::vector<Layer *>::iterator iterator;
+  typedef typename std::vector<Layer *>::const_iterator const_iterator;
 
-  explicit network(const std::string &name = "")
+  explicit Network(const std::string &name = "")
     : name_(name), stop_training_(false) {}
 
   std::string name() const { return name_; }
@@ -72,77 +70,77 @@ class network {
 
   // convenience wrapper for the function below
   template <typename E>
-  void bprop(const std::vector<vec_t> &out,
-             const std::vector<vec_t> &t,
-             const std::vector<vec_t> &t_cost) {
-    bprop<E>(std::vector<tensor_t>{out}, std::vector<tensor_t>{t},
-             std::vector<tensor_t>{t_cost});
+  void bprop(const std::vector<Vector> &out,
+             const std::vector<Vector> &t,
+             const std::vector<Vector> &t_cost) {
+    bprop<E>(std::vector<Matrix>{out}, std::vector<Matrix>{t},
+             std::vector<Matrix>{t_cost});
   }
 
   template <typename E>
-  void bprop(const std::vector<tensor_t> &out,
-             const std::vector<tensor_t> &t,
-             const std::vector<tensor_t> &t_cost) {
-    std::vector<tensor_t> delta = gradient<E>(out, t, t_cost);
-    nodes& nodes = net_;
+  void bprop(const std::vector<Matrix> &out,
+             const std::vector<Matrix> &t,
+             const std::vector<Matrix> &t_cost) {
+    std::vector<Matrix> delta = gradient<E>(out, t, t_cost);
+    NodeList& nodes = net_;
     nodes.backward(delta);
   }
 
-  vec_t fprop(const vec_t &in) {
+  Vector fprop(const Vector &in) {
     if (in.size() != (size_t)in_data_size()) data_mismatch(**net_.begin(), in);
-    std::vector<tensor_t> a(1);
+    std::vector<Matrix> a(1);
     a[0].emplace_back(in);
     return fprop(a)[0][0];
   }
 
   // convenience wrapper for the function below
-  std::vector<vec_t> fprop(const std::vector<vec_t> &in) {
-    return fprop(std::vector<tensor_t>{in})[0];
+  std::vector<Vector> fprop(const std::vector<Vector> &in) {
+    return fprop(std::vector<Matrix>{in})[0];
   }
 
-  std::vector<tensor_t> fprop(const std::vector<tensor_t> &in) {
-      nodes& nodes = net_;
+  std::vector<Matrix> fprop(const std::vector<Matrix> &in) {
+      NodeList& nodes = net_;
     return nodes.forward(in);
   }
 
-  void update_weights(optimizer *opt) {
+  void update_weights(Optimizer *opt) {
     for (auto l : net_) {
       l->update_weight(opt);
     }
   }
 
-  vec_t predict(const vec_t &in) { return fprop(in); }
+  Vector predict(const Vector &in) { return fprop(in); }
 
-  tensor_t predict(const tensor_t &in) { return fprop(in); }
+  Matrix predict(const Matrix &in) { return fprop(in); }
 
-  std::vector<tensor_t> predict(const std::vector<tensor_t> &in) {
+  std::vector<Matrix> predict(const std::vector<Matrix> &in) {
     return fprop(in);
   }
 
-  float_t predict_max_value(const vec_t &in) { return fprop_max(in); }
-  label_t predict_label(const vec_t &in) { return fprop_max_index(in); }
+  Float predict_max_value(const Vector &in) { return fprop_max(in); }
+  Label predict_label(const Vector &in) { return fprop_max_index(in); }
 
   template <typename Error,
             typename Optimizer,
             typename OnBatchEnumerate,
             typename OnEpochEnumerate>
   bool train(Optimizer &optimizer,
-             const std::vector<vec_t> &inputs,
-             const std::vector<label_t> &class_labels,
+             const std::vector<Vector> &inputs,
+             const std::vector<Label> &class_labels,
              size_t batch_size,
              int epoch,
              OnBatchEnumerate on_batch_enumerate,
              OnEpochEnumerate on_epoch_enumerate,
              const bool reset_weights         = false,
              const int n_threads              = MNN_TASK_SIZE,
-             const std::vector<vec_t> &t_cost = std::vector<vec_t>()) {
+             const std::vector<Vector> &t_cost = std::vector<Vector>()) {
     if (inputs.size() != class_labels.size()) {
       return false;
     }
     if (inputs.size() < batch_size || class_labels.size() < batch_size) {
       return false;
     }
-    std::vector<tensor_t> input_tensor, output_tensor, t_cost_tensor;
+    std::vector<Matrix> input_tensor, output_tensor, t_cost_tensor;
     normalize_tensor(inputs, input_tensor);
     normalize_tensor(class_labels, output_tensor);
     if (!t_cost.empty()) normalize_tensor(t_cost, t_cost_tensor);
@@ -168,7 +166,7 @@ class network {
            const bool reset_weights     = false,
            const int n_threads          = MNN_TASK_SIZE,
            const std::vector<U> &t_cost = std::vector<U>()) {
-    std::vector<tensor_t> input_tensor, output_tensor, t_cost_tensor;
+    std::vector<Matrix> input_tensor, output_tensor, t_cost_tensor;
     normalize_tensor(inputs, input_tensor);
     normalize_tensor(desired_outputs, output_tensor);
     if (!t_cost.empty()) normalize_tensor(t_cost, t_cost_tensor);
@@ -180,15 +178,15 @@ class network {
 
   template <typename Error, typename Optimizer>
   bool train(Optimizer &optimizer,
-             const std::vector<vec_t> &inputs,
-             const std::vector<label_t> &class_labels,
+             const std::vector<Vector> &inputs,
+             const std::vector<Label> &class_labels,
              size_t batch_size = 1,
              int epoch         = 1) {
     return train<Error>(optimizer, inputs, class_labels, batch_size, epoch, nop,
                         nop);
   }
 
-  void set_netphase(net_phase phase) {
+  void set_netphase(NetPhase phase) {
     for (auto n : net_) {
       n->set_context(phase);
     }
@@ -196,12 +194,12 @@ class network {
 
   void stop_ongoing_training() { stop_training_ = true; }
 
-  result test(const std::vector<vec_t> &in, const std::vector<label_t> &t) {
-    result test_result;
-    set_netphase(net_phase::test);
+  Result test(const std::vector<Vector> &in, const std::vector<Label> &t) {
+    Result test_result;
+    set_netphase(NetPhase::TESTING);
     for (size_t i = 0; i < in.size(); i++) {
-      const label_t predicted = fprop_max_index(in[i]);
-      const label_t actual    = t[i];
+      const Label predicted = fprop_max_index(in[i]);
+      const Label actual    = t[i];
 
       if (predicted == actual) test_result.num_success++;
       test_result.num_total++;
@@ -216,14 +214,14 @@ class network {
   size_t in_data_size() const { return net_.in_data_size(); }
 
   template <typename WeightInit>
-  network &weight_init(const WeightInit &f) {
+  Network &weight_init(const WeightInit &f) {
     auto ptr = std::make_shared<WeightInit>(f);
     for (auto &l : net_) l->weight_init(ptr);
     return *this;
   }
 
   template <typename BiasInit>
-  network &bias_init(const BiasInit &f) {
+  Network &bias_init(const BiasInit &f) {
     auto ptr = std::make_shared<BiasInit>(f);
     for (auto &l : net_) l->bias_init(ptr);
     return *this;
@@ -235,35 +233,35 @@ class network {
   const_iterator end() const { return net_.end(); }
 
  protected:
-  float_t fprop_max(const vec_t &in) {
-    const vec_t &prediction = fprop(in);
+  Float fprop_max(const Vector &in) {
+    const Vector &prediction = fprop(in);
     return *std::max_element(std::begin(prediction), std::end(prediction));
   }
 
-  label_t fprop_max_index(const vec_t &in) {
-    return label_t(max_index(fprop(in)));
+  Label fprop_max_index(const Vector &in) {
+    return Label(max_index(fprop(in)));
   }
 
  private:
   template <typename Layer>
-  friend network<sequential> &operator<<(network<sequential> &n, Layer &&l);
+  friend Network<Sequential> &operator<<(Network<Sequential> &n, Layer &&l);
 
   template <typename Error,
             typename Optimizer,
             typename OnBatchEnumerate,
             typename OnEpochEnumerate>
   bool fit(Optimizer &optimizer,
-           const std::vector<tensor_t> &inputs,
-           const std::vector<tensor_t> &desired_outputs,
+           const std::vector<Matrix> &inputs,
+           const std::vector<Matrix> &desired_outputs,
            size_t batch_size,
            int epoch,
            OnBatchEnumerate on_batch_enumerate,
            OnEpochEnumerate on_epoch_enumerate,
            const bool reset_weights            = false,
            const int n_threads                 = MNN_TASK_SIZE,
-           const std::vector<tensor_t> &t_cost = std::vector<tensor_t>()) {
+           const std::vector<Matrix> &t_cost = std::vector<Matrix>()) {
     check_target_cost_matrix(desired_outputs, t_cost);
-    set_netphase(net_phase::train);
+    set_netphase(NetPhase::TRAINING);
     net_.setup(reset_weights);
 
     for (auto n : net_) n->set_parallelize(true);
@@ -282,19 +280,19 @@ class network {
       }
       on_epoch_enumerate();
     }
-    set_netphase(net_phase::test);
+    set_netphase(NetPhase::TESTING);
     return true;
   }
 
   template <typename E, typename Optimizer>
   void train_once(Optimizer &optimizer,
-                  const tensor_t *in,
-                  const tensor_t *t,
+                  const Matrix *in,
+                  const Matrix *t,
                   int size,
                   const int nbThreads,
-                  const tensor_t *t_cost) {
+                  const Matrix *t_cost) {
     if (size == 1) {
-      bprop<E>(fprop(in[0]), t[0], t_cost ? t_cost[0] : tensor_t());
+      bprop<E>(fprop(in[0]), t[0], t_cost ? t_cost[0] : Matrix());
       net_.update_weights(&optimizer);
     } else {
       train_onebatch<E>(optimizer, in, t, size, nbThreads, t_cost);
@@ -303,27 +301,27 @@ class network {
 
   template <typename E, typename Optimizer>
   void train_onebatch(Optimizer &optimizer,
-                      const tensor_t *in,
-                      const tensor_t *t,
+                      const Matrix *in,
+                      const Matrix *t,
                       int batch_size,
                       const int num_tasks,
-                      const tensor_t *t_cost) {
+                      const Matrix *t_cost) {
     MNN_UNREFERENCED_PARAMETER(num_tasks);
     std::copy(&in[0], &in[0] + batch_size, &in_batch_[0]);
     std::copy(&t[0], &t[0] + batch_size, &t_batch_[0]);
-    std::vector<tensor_t> t_cost_batch =
-      t_cost ? std::vector<tensor_t>(&t_cost[0], &t_cost[0] + batch_size)
-             : std::vector<tensor_t>();
+    std::vector<Matrix> t_cost_batch =
+      t_cost ? std::vector<Matrix>(&t_cost[0], &t_cost[0] + batch_size)
+             : std::vector<Matrix>();
 
     bprop<E>(fprop(in_batch_), t_batch_, t_cost_batch);
     net_.update_weights(&optimizer);
   }
 
-  void check_target_cost_matrix(const std::vector<tensor_t> &t,
-                                const std::vector<tensor_t> &t_cost) {
+  void check_target_cost_matrix(const std::vector<Matrix> &t,
+                                const std::vector<Matrix> &t_cost) {
     if (!t_cost.empty()) {
       if (t.size() != t_cost.size()) {
-        throw nn_error(
+        throw MnnError(
           "if target cost is supplied, "
           "its length must equal that of target data");
       }
@@ -335,17 +333,17 @@ class network {
   }
 
   // regression
-  void check_target_cost_element(const vec_t &t, const vec_t &t_cost) {
+  void check_target_cost_element(const Vector &t, const Vector &t_cost) {
     if (t.size() != t_cost.size()) {
-      throw nn_error(
+      throw MnnError(
         "if target cost is supplied for a regression task, "
         "its shape must be identical to the target data");
     }
   }
 
-  void check_target_cost_element(const tensor_t &t, const tensor_t &t_cost) {
+  void check_target_cost_element(const Matrix &t, const Matrix &t_cost) {
     if (t.size() != t_cost.size()) {
-      throw nn_error(
+      throw MnnError(
         "if target cost is supplied for a regression task, "
         "its shape must be identical to the target data");
     }
@@ -353,8 +351,8 @@ class network {
       check_target_cost_element(t[i], t_cost[i]);
   }
 
-  const tensor_t *get_target_cost_sample_pointer(
-    const std::vector<tensor_t> &t_cost, size_t i) {
+  const Matrix *get_target_cost_sample_pointer(
+    const std::vector<Matrix> &t_cost, size_t i) {
     if (!t_cost.empty()) {
       assert(i < t_cost.size());
       return &(t_cost[i]);
@@ -363,21 +361,21 @@ class network {
     }
   }
 
-  void normalize_tensor(const std::vector<tensor_t> &inputs,
-                        std::vector<tensor_t> &normalized) {
+  void normalize_tensor(const std::vector<Matrix> &inputs,
+                        std::vector<Matrix> &normalized) {
     normalized = inputs;
   }
 
-  void normalize_tensor(const std::vector<vec_t> &inputs,
-                        std::vector<tensor_t> &normalized) {
+  void normalize_tensor(const std::vector<Vector> &inputs,
+                        std::vector<Matrix> &normalized) {
     normalized.reserve(inputs.size());
     for (size_t i = 0; i < inputs.size(); i++)
-      normalized.emplace_back(tensor_t{inputs[i]});
+      normalized.emplace_back(Matrix{inputs[i]});
   }
 
-  void normalize_tensor(const std::vector<label_t> &inputs,
-                        std::vector<tensor_t> &normalized) {
-    std::vector<vec_t> vec;
+  void normalize_tensor(const std::vector<Label> &inputs,
+                        std::vector<Matrix> &normalized) {
+    std::vector<Vector> vec;
     normalized.reserve(inputs.size());
     net_.label2vec(inputs, vec);
     normalize_tensor(vec, normalized);
@@ -386,12 +384,12 @@ class network {
   std::string name_;
   NetType net_;
   bool stop_training_;
-  std::vector<tensor_t> in_batch_;
-  std::vector<tensor_t> t_batch_;
+  std::vector<Matrix> in_batch_;
+  std::vector<Matrix> t_batch_;
 };
 
 template <typename Layer>
-network<sequential> &operator<<(network<sequential> &n, Layer &&l) {
+Network<Sequential> &operator<<(Network<Sequential> &n, Layer &&l) {
   n.net_.add(std::forward<Layer>(l));
   return n;
 }

@@ -63,18 +63,14 @@ function(mnn_merge_flag_lists out_var)
   set(${out_var} ${__result} PARENT_SCOPE)
 endfunction()
 
-####
+#
 # Prints accumulated mnn configuration summary
-# Usage:
-#   mnn_print_configuration_summary()
-
 function(mnn_print_configuration_summary)
-
     mnn_merge_flag_lists(__flags_rel CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS)
     mnn_merge_flag_lists(__flags_deb CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS)
 
     mnn_status("")
-    mnn_status("******************* mnn Configuration Summary *******************")
+    mnn_status("******************* MNN Summary *******************")
     mnn_status("General:")
     mnn_status("  Version           :   ${PROJECT_VERSION}")
     mnn_status("  System            :   ${CMAKE_SYSTEM_NAME}")
@@ -86,7 +82,7 @@ function(mnn_print_configuration_summary)
     mnn_status("  BUILD_EXAMPLE    :    ${BUILD_EXAMPLE}")
     mnn_status("  BUILD_TEST       :    ${BUILD_TEST}")
     mnn_status("")
-    mnn_status("Dependencies:")
+    mnn_status("Multithread Backend:")
     mnn_status("  Pthread           : " USE_PTHREAD THEN "Yes" ELSE "No")
     mnn_status("  TBB               : " USE_TBB AND TBB_FOUND THEN "Yes (ver. ${TBB_INTERFACE_VERSION})" ELSE "No")
     mnn_status("  OMP               : " USE_OMP AND OMP_FOUND THEN "Yes" ELSE "No")

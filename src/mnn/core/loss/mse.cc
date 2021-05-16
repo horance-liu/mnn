@@ -10,22 +10,22 @@
 
 namespace mnn {
 
-float_t mse::f(const vec_t &y, const vec_t &t)
+Float Mse::f(const Vector &y, const Vector &t)
 {
     assert(y.size() == t.size());
-    float_t d { 0.0 };
+    Float d { 0.0 };
 
     for (size_t i = 0; i < y.size(); ++i)
         d += (y[i] - t[i]) * (y[i] - t[i]);
 
-    return d / static_cast<float_t>(y.size());
+    return d / static_cast<Float>(y.size());
 }
 
-vec_t mse::df(const vec_t &y, const vec_t &t)
+Vector Mse::df(const Vector &y, const Vector &t)
 {
     assert(y.size() == t.size());
-    vec_t d(t.size());
-    float_t factor = float_t(2) / static_cast<float_t>(t.size());
+    Vector d(t.size());
+    Float factor = Float(2) / static_cast<Float>(t.size());
 
     for (size_t i = 0; i < y.size(); ++i)
         d[i] = factor * (y[i] - t[i]);

@@ -21,21 +21,21 @@ void Conv2dGradOp::compute(OpKernelContext &context)
     auto params = OpKernel::params_->conv();
 
     // incoming/outcoming data
-    const tensor_t &prev_out = context.input(0);
-    const tensor_t &W = context.input(1);
-    tensor_t &dW = context.input_grad(1);
-    tensor_t &db = context.input_grad(2);
-    tensor_t &prev_delta = context.input_grad(0);
-    tensor_t &curr_delta = context.output_grad(0);
+    const Matrix &prev_out = context.input(0);
+    const Matrix &W = context.input(1);
+    Matrix &dW = context.input_grad(1);
+    Matrix &db = context.input_grad(2);
+    Matrix &prev_delta = context.input_grad(0);
+    Matrix &curr_delta = context.output_grad(0);
 
-    fill_tensor(prev_delta, float_t { 0 });
-    const backend_t engine = context.engine();
+    fill_tensor(prev_delta, Float { 0 });
+    const BackendType engine = context.engine();
 
-    if (engine == backend_t::cpu) {
+    if (engine == BackendType::CPU) {
         kernels::conv2d_op_internal(prev_out, W[0], dW, db, curr_delta,
                 prev_delta, params, context.parallelize());
     } else {
-        throw nn_error("Not supported engine: " + to_string(engine));
+        throw MnnError("Not supported engine: " + to_string(engine));
     }
 }
 

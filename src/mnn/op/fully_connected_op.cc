@@ -20,20 +20,20 @@ void FullyConnectedOp::compute(OpKernelContext &context)
     auto params = OpKernel::params_->fully();
 
     // incomimg/outcoming data
-    const tensor_t &in_data = context.input(0);
-    const tensor_t &W = context.input(1);
-    const tensor_t *bias = params.has_bias_ ? &context.input(2) : nullptr;
-    tensor_t &out_data = context.output(0);
+    const Matrix &in_data = context.input(0);
+    const Matrix &W = context.input(1);
+    const Matrix *bias = params.has_bias_ ? &context.input(2) : nullptr;
+    Matrix &out_data = context.output(0);
 
-    fill_tensor(out_data, float_t { 0 });
-    const backend_t engine = context.engine();
+    fill_tensor(out_data, Float { 0 });
+    const BackendType engine = context.engine();
 
-    if (engine == backend_t::cpu) {
+    if (engine == BackendType::CPU) {
         kernels::fully_connected_op_internal(in_data, W[0],
-                params.has_bias_ ? (*bias)[0] : vec_t(), out_data, params,
+                params.has_bias_ ? (*bias)[0] : Vector(), out_data, params,
                 context.parallelize());
     } else {
-        throw nn_error("Not supported engine: " + to_string(engine));
+        throw MnnError("Not supported engine: " + to_string(engine));
     }
 }
 

@@ -9,8 +9,8 @@
 
 namespace mnn {
 
-void apply_cost_if_defined(std::vector<vec_t> &sample_gradient,
-        const std::vector<vec_t> &sample_cost)
+void apply_cost_if_defined(std::vector<Vector> &sample_gradient,
+        const std::vector<Vector> &sample_cost)
 {
     if (sample_gradient.size() == sample_cost.size()) {
         const size_t channel_count = sample_gradient.size();

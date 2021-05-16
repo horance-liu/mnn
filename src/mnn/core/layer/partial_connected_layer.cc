@@ -13,15 +13,15 @@
 
 namespace mnn {
 
-partial_connected_layer::partial_connected_layer(size_t in_dim, size_t out_dim,
-        size_t weight_dim, size_t bias_dim, float_t scale_factor) : layer(
-        std_input_order(bias_dim > 0), { vector_type::data }), weight2io_(
+PartialConnectedLayer::PartialConnectedLayer(size_t in_dim, size_t out_dim,
+        size_t weight_dim, size_t bias_dim, Float scale_factor) : Layer(
+        std_input_order(bias_dim > 0), { VectorType::DATA }), weight2io_(
         weight_dim), out2wi_(out_dim), in2wo_(in_dim), bias2out_(bias_dim), out2bias_(
         out_dim), scale_factor_(scale_factor)
 {
 }
 
-size_t partial_connected_layer::param_size() const
+size_t PartialConnectedLayer::param_size() const
 {
     size_t total_param = 0;
     for (auto w : weight2io_)
@@ -33,17 +33,17 @@ size_t partial_connected_layer::param_size() const
     return total_param;
 }
 
-size_t partial_connected_layer::fan_in_size() const
+size_t PartialConnectedLayer::fan_in_size() const
 {
     return max_size(out2wi_);
 }
 
-size_t partial_connected_layer::fan_out_size() const
+size_t PartialConnectedLayer::fan_out_size() const
 {
     return max_size(in2wo_);
 }
 
-void partial_connected_layer::connect_weight(size_t input_index,
+void PartialConnectedLayer::connect_weight(size_t input_index,
         size_t output_index, size_t weight_index)
 {
     weight2io_[weight_index].emplace_back(input_index, output_index);
@@ -51,32 +51,32 @@ void partial_connected_layer::connect_weight(size_t input_index,
     in2wo_[input_index].emplace_back(weight_index, output_index);
 }
 
-void partial_connected_layer::connect_bias(size_t bias_index,
+void PartialConnectedLayer::connect_bias(size_t bias_index,
         size_t output_index)
 {
     out2bias_[output_index] = bias_index;
     bias2out_[bias_index].push_back(output_index);
 }
 
-void partial_connected_layer::forward_propagation(
-        const std::vector<tensor_t*> &in_data, std::vector<tensor_t*> &out_data)
+void PartialConnectedLayer::forward_propagation(
+        const std::vector<Matrix*> &in_data, std::vector<Matrix*> &out_data)
 {
-    const tensor_t &in = *in_data[0];
-    const vec_t &W = (*in_data[1])[0];
-    const vec_t &b = (*in_data[2])[0];
-    tensor_t &out = *out_data[0];
+    const Matrix &in = *in_data[0];
+    const Vector &W = (*in_data[1])[0];
+    const Vector &b = (*in_data[2])[0];
+    Matrix &out = *out_data[0];
 
     // @todo revise the parallelism strategy
     for (size_t sample = 0, sample_count = in.size(); sample < sample_count;
             ++sample) {
-        vec_t &out_sample = out[sample];
+        Vector &out_sample = out[sample];
 
         for_i(out2wi_.size(), [&](size_t i) {
             const wi_connections &connections = out2wi_[i];
 
-            float_t &out_element = out_sample[i];
+            Float &out_element = out_sample[i];
 
-            out_element = float_t {0};
+            out_element = Float {0};
 
             for (auto connection : connections)
             out_element += W[connection.first] * in[sample][connection.second];
@@ -87,18 +87,18 @@ void partial_connected_layer::forward_propagation(
     }
 }
 
-void partial_connected_layer::back_propagation(
-        const std::vector<tensor_t*> &in_data,
-        const std::vector<tensor_t*> &out_data,
-        std::vector<tensor_t*> &out_grad, std::vector<tensor_t*> &in_grad)
+void PartialConnectedLayer::back_propagation(
+        const std::vector<Matrix*> &in_data,
+        const std::vector<Matrix*> &out_data,
+        std::vector<Matrix*> &out_grad, std::vector<Matrix*> &in_grad)
 {
     MNN_UNREFERENCED_PARAMETER(out_data);
-    const tensor_t &prev_out = *in_data[0];
-    const vec_t &W = (*in_data[1])[0];
-    vec_t &dW = (*in_grad[1])[0];
-    vec_t &db = (*in_grad[2])[0];
-    tensor_t &prev_delta = *in_grad[0];
-    tensor_t &curr_delta = *out_grad[0];
+    const Matrix &prev_out = *in_data[0];
+    const Vector &W = (*in_data[1])[0];
+    Vector &dW = (*in_grad[1])[0];
+    Vector &db = (*in_grad[2])[0];
+    Matrix &prev_delta = *in_grad[0];
+    Matrix &curr_delta = *out_grad[0];
 
     // @todo revise the parallelism strategy
     for (size_t sample = 0, sample_count = prev_out.size();
@@ -107,7 +107,7 @@ void partial_connected_layer::back_propagation(
                 [&](
                         size_t i) {
                             const wo_connections &connections = in2wo_[i];
-                            float_t delta {0};
+                            Float delta {0};
 
                             for (auto connection : connections)
                             delta += W[connection.first] * curr_delta[sample][connection.second];
@@ -117,7 +117,7 @@ void partial_connected_layer::back_propagation(
 
         for_i(weight2io_.size(), [&](size_t i) {
             const io_connections &connections = weight2io_[i];
-            float_t diff {0};
+            Float diff {0};
 
             for (auto connection : connections)
             diff += prev_out[sample][connection.first] *
@@ -128,7 +128,7 @@ void partial_connected_layer::back_propagation(
 
         for (size_t i = 0; i < bias2out_.size(); i++) {
             const std::vector<size_t> &outs = bias2out_[i];
-            float_t diff { 0 };
+            Float diff { 0 };
 
             for (auto o : outs)
                 diff += curr_delta[sample][o];

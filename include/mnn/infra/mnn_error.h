@@ -13,9 +13,9 @@
 
 namespace mnn {
 
-class nn_error : public std::exception {
+class MnnError : public std::exception {
  public:
-  explicit nn_error(const std::string &msg) : msg_(msg) {}
+  explicit MnnError(const std::string &msg) : msg_(msg) {}
   const char *what() const throw() override { return msg_.c_str(); }
 
  private:

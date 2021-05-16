@@ -10,9 +10,9 @@
 
 namespace mnn {
 
-void sequential::backward(const std::vector<tensor_t> &first)
+void Sequential::backward(const std::vector<Matrix> &first)
 {
-    std::vector<std::vector<const vec_t*>> reordered_grad;
+    std::vector<std::vector<const Vector*>> reordered_grad;
     reorder_for_layerwise_processing(first, reordered_grad);
     assert(reordered_grad.size() == 1);
 
@@ -23,9 +23,9 @@ void sequential::backward(const std::vector<tensor_t> &first)
     }
 }
 
-std::vector<tensor_t> sequential::forward(const std::vector<tensor_t> &first)
+std::vector<Matrix> Sequential::forward(const std::vector<Matrix> &first)
 {
-    std::vector<std::vector<const vec_t*>> reordered_data;
+    std::vector<std::vector<const Vector*>> reordered_data;
     reorder_for_layerwise_processing(first, reordered_data);
     assert(reordered_data.size() == 1);
 
@@ -35,31 +35,31 @@ std::vector<tensor_t> sequential::forward(const std::vector<tensor_t> &first)
         l->forward();
     }
 
-    std::vector<const tensor_t*> out;
+    std::vector<const Matrix*> out;
     nodes_.back()->output(out);
 
     return normalize_out(out);
 }
 
-void sequential::check_connectivity()
+void Sequential::check_connectivity()
 {
     for (size_t i = 0; i < nodes_.size() - 1; i++) {
         auto out = nodes_[i]->outputs();
         auto in = nodes_[i + 1]->inputs();
 
         if (out[0] != in[0]) {
-            throw nn_error("");
+            throw MnnError("");
         }
     }
 }
 
-std::vector<tensor_t> sequential::normalize_out(
-        const std::vector<const tensor_t*> &out)
+std::vector<Matrix> Sequential::normalize_out(
+        const std::vector<const Matrix*> &out)
 {
-    std::vector < tensor_t > normalized_output;
+    std::vector < Matrix > normalized_output;
 
     const size_t sample_count = out[0]->size();
-    normalized_output.resize(sample_count, tensor_t(1));
+    normalized_output.resize(sample_count, Matrix(1));
 
     for (size_t sample = 0; sample < sample_count; ++sample) {
         normalized_output[sample][0] = (*out[0])[sample];

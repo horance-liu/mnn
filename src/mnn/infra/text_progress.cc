@@ -10,7 +10,7 @@
 
 namespace mnn {
 
-text_progress::text_progress(size_t expected_count_, std::ostream &os,
+TextProgress::TextProgress(size_t expected_count_, std::ostream &os,
         const std::string &s1, // leading strings
         const std::string &s2, const std::string &s3) : m_os(os), m_s1(s1), m_s2(
         s2), m_s3(s3)
@@ -18,7 +18,7 @@ text_progress::text_progress(size_t expected_count_, std::ostream &os,
     restart(expected_count_);
 }
 
-void text_progress::restart(size_t expected_count_)
+void TextProgress::restart(size_t expected_count_)
 {
     _count = _next_tic_count = _tic = 0;
     _expected_count = expected_count_;
@@ -31,7 +31,7 @@ void text_progress::restart(size_t expected_count_)
         _expected_count = 1;  // prevent divide by zero
 }                                             // restart
 
-size_t text_progress::operator+=(size_t increment)
+size_t TextProgress::operator+=(size_t increment)
 {
     if ((_count += increment) >= _next_tic_count) {
         display_tic();
@@ -39,20 +39,20 @@ size_t text_progress::operator+=(size_t increment)
     return _count;
 }
 
-size_t text_progress::operator++()
+size_t TextProgress::operator++()
 {
     return operator+=(1);
 }
-size_t text_progress::count() const
+size_t TextProgress::count() const
 {
     return _count;
 }
-size_t text_progress::expected_count() const
+size_t TextProgress::expected_count() const
 {
     return _expected_count;
 }
 
-void text_progress::display_tic()
+void TextProgress::display_tic()
 {
     size_t tics_needed = static_cast<size_t>((static_cast<double>(_count)
             / _expected_count) * 50.0);

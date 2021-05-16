@@ -18,7 +18,7 @@
 
 #include "mnn/infra/config.h"
 #include "mnn/infra/aligned_allocator.h"
-#include "mnn/infra/nn_error.h"
+#include "mnn/infra/mnn_error.h"
 
 #ifdef MNN_USE_TBB
 #ifndef NOMINMAX
@@ -44,27 +44,27 @@ namespace mnn {
 static tbb::task_scheduler_init tbbScheduler(
   tbb::task_scheduler_init::automatic);  // tbb::task_scheduler_init::deferred);
 
-typedef tbb::blocked_range<size_t> blocked_range;
+typedef tbb::BlockedRange<size_t> BlockedRange;
 
 template <typename Func>
 void parallel_for(size_t begin, size_t end, const Func &f, size_t grainsize) {
   assert(end >= begin);
   tbb::parallel_for(
-    blocked_range(begin, end, end - begin > grainsize ? grainsize : 1), f);
+    BlockedRange(begin, end, end - begin > grainsize ? grainsize : 1), f);
 }
 
 template <typename Func>
 void xparallel_for(size_t begin, size_t end, const Func &f) {
-  f(blocked_range(begin, end, 100));
+  f(BlockedRange(begin, end, 100));
 }
 
 #else
 
-struct blocked_range {
+struct BlockedRange {
   typedef size_t const_iterator;
 
-  blocked_range(size_t begin, size_t end) : begin_(begin), end_(end) {}
-  blocked_range(int begin, int end) : begin_(begin), end_(end) {}
+  BlockedRange(size_t begin, size_t end) : begin_(begin), end_(end) {}
+  BlockedRange(int begin, int end) : begin_(begin), end_(end) {}
 
   const_iterator begin() const { return begin_; }
   const_iterator end() const { return end_; }
@@ -76,7 +76,7 @@ struct blocked_range {
 
 template <typename Func>
 void xparallel_for(size_t begin, size_t end, const Func &f) {
-  blocked_range r(begin, end);
+  BlockedRange r(begin, end);
   f(r);
 }
 
@@ -91,7 +91,7 @@ void parallel_for(size_t begin,
 // unsigned index isn't allowed in OpenMP 2.0
 #pragma omp parallel for
   for (int i = static_cast<int>(begin); i < static_cast<int>(end); ++i)
-    f(blocked_range(i, i + 1));
+    f(BlockedRange(i, i + 1));
 }
 
 #elif defined(MNN_USE_GCD)
@@ -116,7 +116,7 @@ void parallel_for(size_t begin, size_t end, const Func &f, size_t grainsize) {
                    }
                    assert(blockStart < blockEnd);
 
-                   f(blocked_range(blockStart, blockEnd));
+                   f(BlockedRange(blockStart, blockEnd));
                  });
 }
 
@@ -151,7 +151,7 @@ void parallel_for(size_t begin,
   for (size_t i = 0; i < nthreads; i++) {
     futures.push_back(
       std::move(std::async(std::launch::async, [blockBegin, blockEnd, &f] {
-        f(blocked_range(blockBegin, blockEnd));
+        f(BlockedRange(blockBegin, blockEnd));
       })));
 
     blockBegin += blockSize;
@@ -189,7 +189,7 @@ inline void for_i(bool parallelize, T size, Func f, size_t grainsize = 100u) {
   }
 #else  // #ifdef MNN_SINGLE_THREAD
   for_(parallelize, 0u, size,
-       [&](const blocked_range &r) {
+       [&](const BlockedRange &r) {
 #ifdef MNN_USE_OMP
 #pragma omp parallel for
          for (int i = static_cast<int>(r.begin());

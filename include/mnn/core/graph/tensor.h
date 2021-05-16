@@ -13,7 +13,7 @@
 
 namespace mnn {
 
-template <typename U = float_t, typename Storage = std::vector<U>>
+template <typename U = Float, typename Storage = std::vector<U>>
 class Tensor {
   typedef U *UPtr;
 

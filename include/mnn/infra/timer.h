@@ -13,17 +13,17 @@
 
 namespace mnn {
 
-class timer {
+class Timer {
 public:
-    timer();
+    Timer();
 
-    float_t elapsed();
+    Float elapsed();
 
     void restart();
     void start();
     void stop();
 
-    float_t total();
+    Float total();
 
 private:
     std::chrono::high_resolution_clock::time_point t1, t2;

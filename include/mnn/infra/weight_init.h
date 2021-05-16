@@ -13,40 +13,40 @@
 namespace mnn {
 namespace weight_init {
 
-class function {
+class Function {
  public:
-  virtual ~function() {}
-  virtual void fill(vec_t *weight, size_t fan_in, size_t fan_out) = 0;
+  virtual ~Function() {}
+  virtual void fill(Vector *weight, size_t fan_in, size_t fan_out) = 0;
 };
 
-class scalable : public function {
+class Scalable : public Function {
  public:
-  explicit scalable(float_t value) : scale_(value) {}
+  explicit Scalable(Float value) : scale_(value) {}
 
-  void scale(float_t value) { scale_ = value; }
+  void scale(Float value) { scale_ = value; }
 
  protected:
-  float_t scale_;
+  Float scale_;
 };
 
-class xavier : public scalable {
+class Xavier : public Scalable {
  public:
-  xavier() : scalable(float_t(6)) {}
-  explicit xavier(float_t value) : scalable(value) {}
+  Xavier() : Scalable(Float(6)) {}
+  explicit Xavier(Float value) : Scalable(value) {}
 
-  void fill(vec_t *weight, size_t fan_in, size_t fan_out) override {
-    const float_t weight_base = std::sqrt(scale_ / (fan_in + fan_out));
+  void fill(Vector *weight, size_t fan_in, size_t fan_out) override {
+    const Float weight_base = std::sqrt(scale_ / (fan_in + fan_out));
 
     uniform_rand(weight->begin(), weight->end(), -weight_base, weight_base);
   }
 };
 
-class constant : public scalable {
+class Constant : public Scalable {
  public:
-  constant() : scalable(float_t{0}) {}
-  explicit constant(float_t value) : scalable(value) {}
+  Constant() : Scalable(Float{0}) {}
+  explicit Constant(Float value) : Scalable(value) {}
 
-  void fill(vec_t *weight, size_t fan_in, size_t fan_out) override {
+  void fill(Vector *weight, size_t fan_in, size_t fan_out) override {
     MNN_UNREFERENCED_PARAMETER(fan_in);
     MNN_UNREFERENCED_PARAMETER(fan_out);
 

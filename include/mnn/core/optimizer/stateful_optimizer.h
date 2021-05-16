@@ -14,7 +14,7 @@
 namespace mnn {
 
 template<int N>
-struct stateful_optimizer: public optimizer {
+struct StatefulOptimizer: public Optimizer {
     void reset() override
     {
         for (auto &e : E_)
@@ -23,14 +23,14 @@ struct stateful_optimizer: public optimizer {
 
 protected:
     template<int Index>
-    vec_t& get(const vec_t &key)
+    Vector& get(const Vector &key)
     {
         if (E_[Index][&key].empty())
-            E_[Index][&key].resize(key.size(), float_t());
+            E_[Index][&key].resize(key.size(), Float());
         return E_[Index][&key];
     }
 
-    std::unordered_map<const vec_t*, vec_t> E_[N];
+    std::unordered_map<const Vector*, Vector> E_[N];
 };
 
 } // namespace mnn

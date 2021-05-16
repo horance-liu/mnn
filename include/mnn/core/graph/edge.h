@@ -13,35 +13,35 @@
 
 namespace mnn {
 
-class node;
-class layer;
-class edge;
+class Node;
+class Layer;
+class Edge;
 
-class edge {
+class Edge {
  public:
-  edge(node *prev, const shape3d &shape, vector_type vtype);
+  Edge(Node *prev, const Shape3d &shape, VectorType vtype);
 
-  void merge_grads(vec_t *dst);
+  void merge_grads(Vector *dst);
   void clear_grads();
 
-  tensor_t *get_data();
-  const tensor_t *get_data() const;
-  tensor_t *get_gradient();
-  const tensor_t *get_gradient() const;
-  const std::vector<node *> &next() const;
-  node *prev();
-  const node *prev() const;
-  const shape3d &shape() const;
-  vector_type vtype() const;
-  void add_next_node(node *next);
+  Matrix *get_data();
+  const Matrix *get_data() const;
+  Matrix *get_gradient();
+  const Matrix *get_gradient() const;
+  const std::vector<Node *> &next() const;
+  Node *prev();
+  const Node *prev() const;
+  const Shape3d &shape() const;
+  VectorType vtype() const;
+  void add_next_node(Node *next);
 
  private:
-  shape3d shape_;
-  vector_type vtype_;
-  tensor_t data_;
-  tensor_t grad_;
-  node *prev_;                // previous node, "producer" of this tensor
-  std::vector<node *> next_;  // next nodes, "consumers" of this tensor
+  Shape3d shape_;
+  VectorType vtype_;
+  Matrix data_;
+  Matrix grad_;
+  Node *prev_;                // previous node, "producer" of this tensor
+  std::vector<Node *> next_;  // next nodes, "consumers" of this tensor
 };
 
 }  // namespace mnn

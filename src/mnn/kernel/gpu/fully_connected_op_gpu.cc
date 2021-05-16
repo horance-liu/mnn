@@ -10,5 +10,8 @@
 
 namespace mnn {
 namespace kernels {
+
+void fully_connected_op_gpu() {}
+
 }  // namespace kernels
 }  // namespace mnn

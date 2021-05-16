@@ -13,30 +13,30 @@
 
 namespace mnn {
 
-std::string tanh_layer::layer_type() const
+std::string TanhLayer::layer_type() const
 {
     return "tanh-activation";
 }
 
-void tanh_layer::forward_activation(const vec_t &x, vec_t &y)
+void TanhLayer::forward_activation(const Vector &x, Vector &y)
 {
     for (size_t j = 0; j < x.size(); j++) {
         y[j] = std::tanh(x[j]);
     }
 }
 
-void tanh_layer::backward_activation(const vec_t &x, const vec_t &y, vec_t &dx,
-        const vec_t &dy)
+void TanhLayer::backward_activation(const Vector &x, const Vector &y, Vector &dx,
+        const Vector &dy)
 {
     for (size_t j = 0; j < x.size(); j++) {
         // dx = dy * (gradient of tanh)
-        dx[j] = dy[j] * (float_t(1) - sqr(y[j]));
+        dx[j] = dy[j] * (Float(1) - sqr(y[j]));
     }
 }
 
-std::pair<float_t, float_t> tanh_layer::scale() const
+std::pair<Float, Float> TanhLayer::scale() const
 {
-    return std::make_pair(float_t(-0.8), float_t(0.8));
+    return std::make_pair(Float(-0.8), Float(0.8));
 }
 
 }  // namespace mnn

@@ -13,33 +13,33 @@
 
 namespace mnn {
 
-std::string relu_layer::layer_type() const
+std::string ReluLayer::layer_type() const
 {
     return "relu-activation";
 }
 
-void relu_layer::forward_activation(const vec_t &x, vec_t &y)
+void ReluLayer::forward_activation(const Vector &x, Vector &y)
 {
     for (size_t j = 0; j < x.size(); j++) {
-        y[j] = std::max(float_t(0), x[j]);
+        y[j] = std::max(Float(0), x[j]);
     }
 }
 
-void relu_layer::backward_activation(
-        const vec_t &x,
-        const vec_t &y,
-        vec_t &dx,
-        const vec_t &dy)
+void ReluLayer::backward_activation(
+        const Vector &x,
+        const Vector &y,
+        Vector &dx,
+        const Vector &dy)
 {
     for (size_t j = 0; j < x.size(); j++) {
         // dx = dy * (gradient of relu)
-        dx[j] = dy[j] * (y[j] > float_t(0) ? float_t(1) : float_t(0));
+        dx[j] = dy[j] * (y[j] > Float(0) ? Float(1) : Float(0));
     }
 }
 
-std::pair<float_t, float_t> relu_layer::scale() const
+std::pair<Float, Float> ReluLayer::scale() const
 {
-    return std::make_pair(float_t(0.1), float_t(0.9));
+    return std::make_pair(Float(0.1), Float(0.9));
 }
 
 }  // namespace mnn

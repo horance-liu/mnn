@@ -13,15 +13,15 @@
 
 namespace mnn {
 
-class fully_params : public Params {
+class FullyParams : public Params {
  public:
   size_t in_size_;
   size_t out_size_;
   bool has_bias_;
 };
 
-inline fully_params &Params::fully() {
-  return *(static_cast<fully_params *>(this));
+inline FullyParams &Params::fully() {
+  return *(static_cast<FullyParams *>(this));
 }
 
 }  // namespace mnn

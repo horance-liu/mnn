@@ -10,32 +10,32 @@
 
 namespace mnn {
 
-timer::timer() : t1(std::chrono::high_resolution_clock::now())
+Timer::Timer() : t1(std::chrono::high_resolution_clock::now())
 {
 }
 
-float_t timer::elapsed()
+Float Timer::elapsed()
 {
-    return std::chrono::duration_cast<std::chrono::duration<float_t>>(
+    return std::chrono::duration_cast<std::chrono::duration<Float>>(
             std::chrono::high_resolution_clock::now() - t1).count();
 }
-void timer::restart()
+void Timer::restart()
 {
     t1 = std::chrono::high_resolution_clock::now();
 }
-void timer::start()
+void Timer::start()
 {
     t1 = std::chrono::high_resolution_clock::now();
 }
-void timer::stop()
+void Timer::stop()
 {
     t2 = std::chrono::high_resolution_clock::now();
 }
 
-float_t timer::total()
+Float Timer::total()
 {
     stop();
-    return std::chrono::duration_cast<std::chrono::duration<float_t>>(t2 - t1).count();
+    return std::chrono::duration_cast<std::chrono::duration<Float>>(t2 - t1).count();
 }
 
 }  // namespace mnn

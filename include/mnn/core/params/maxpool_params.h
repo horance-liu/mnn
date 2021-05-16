@@ -14,16 +14,16 @@
 
 namespace mnn {
 
-class maxpool_params : public Params {
+class MaxpoolParams : public Params {
  public:
-  index3d<size_t> in;
-  index3d<size_t> out;
+  Index3d<size_t> in;
+  Index3d<size_t> out;
   size_t pool_size_x;
   size_t pool_size_y;
   size_t stride_x;
   size_t stride_y;
   bool ceil_mode;
-  padding pad_type;
+  Padding pad_type;
 
   std::vector<std::vector<size_t>> out2inmax;
   std::vector<std::vector<size_t>> out2in;
@@ -31,8 +31,8 @@ class maxpool_params : public Params {
 };
 
 // TODO(nyanp): can we do better here?
-inline maxpool_params &Params::maxpool() {
-  return *(static_cast<maxpool_params *>(this));
+inline MaxpoolParams &Params::maxpool() {
+  return *(static_cast<MaxpoolParams *>(this));
 }
 
 }  // namespace mnn

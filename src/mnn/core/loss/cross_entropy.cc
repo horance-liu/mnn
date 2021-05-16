@@ -9,25 +9,25 @@
 
 namespace mnn {
 
-float_t cross_entropy::f(const vec_t &y, const vec_t &t)
+Float CrossEntropy::f(const Vector &y, const Vector &t)
 {
     assert(y.size() == t.size());
-    float_t d { 0 };
+    Float d { 0 };
 
     for (size_t i = 0; i < y.size(); ++i)
         d += -t[i] * std::log(y[i])
-                - (float_t(1) - t[i]) * std::log(float_t(1) - y[i]);
+                - (Float(1) - t[i]) * std::log(Float(1) - y[i]);
 
     return d;
 }
 
-vec_t cross_entropy::df(const vec_t &y, const vec_t &t)
+Vector CrossEntropy::df(const Vector &y, const Vector &t)
 {
     assert(y.size() == t.size());
-    vec_t d(t.size());
+    Vector d(t.size());
 
     for (size_t i = 0; i < y.size(); ++i)
-        d[i] = (y[i] - t[i]) / (y[i] * (float_t(1) - y[i]));
+        d[i] = (y[i] - t[i]) / (y[i] * (Float(1) - y[i]));
 
     return d;
 }

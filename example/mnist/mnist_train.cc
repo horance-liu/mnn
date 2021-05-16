@@ -10,8 +10,8 @@
 #include "mnn/mnn.h"
 #include "mnist_parser.h"
 
-static void construct_net(mnn::network<mnn::sequential> &nn,
-        mnn::backend_t backend_type)
+static void construct_net(mnn::Network<mnn::Sequential> &nn,
+        mnn::BackendType backend_type)
 {
 // connection table [Y.Lecun, 1998 Table.1]
 #define O true
@@ -34,26 +34,23 @@ static void construct_net(mnn::network<mnn::sequential> &nn,
     // S : sub-sampling
     // F : fully connected
     // clang-format off
-    using fc = mnn::layers::fc;
-    using conv = mnn::layers::conv;
-    using ave_pool = mnn::layers::ave_pool;
+    using fc = mnn::layer::fc;
+    using conv = mnn::layer::conv;
+    using ave_pool = mnn::layer::ave_pool;
     using tanh = mnn::activation::tanh;
 
-    using mnn::connection_table;
-    using padding = mnn::padding;
-
     nn  << conv(32, 32, 5, 1, 6,   // C1, 1@32x32-in, 6@28x28-out
-               padding::valid, true, 1, 1, 1, 1, backend_type) << tanh()
+               mnn::Padding::VALID, true, 1, 1, 1, 1, backend_type) << tanh()
         << ave_pool(28, 28, 6, 2)  // S2, 6@28x28-in, 6@14x14-out
         << tanh()
         << conv(14, 14, 5, 6, 16,   // C3, 6@14x14-in, 16@10x10-out
-                connection_table(tbl, 6, 16), padding::valid, true, 1, 1, 1,
+                mnn::ConnectionTable(tbl, 6, 16), mnn::Padding::VALID, true, 1, 1, 1,
                 1, backend_type)
         << tanh()
         << ave_pool(10, 10, 16, 2) // S4, 16@10x10-in, 16@5x5-out
         << tanh()
         << conv(5, 5, 5, 16, 120,   // C5, 16@5x5-in, 120@1x1-out
-                padding::valid, true, 1, 1, 1, 1, backend_type)
+                mnn::Padding::VALID, true, 1, 1, 1, 1, backend_type)
         << tanh()
         << fc(120, 10, true, backend_type)  // F6, 120-in, 10-out
         << tanh();
@@ -61,19 +58,19 @@ static void construct_net(mnn::network<mnn::sequential> &nn,
 
 static void train_lenet(const std::string &data_dir_path, double learning_rate,
         const int n_train_epochs, const int n_minibatch,
-        mnn::backend_t backend_type)
+        mnn::BackendType backend_type)
 {
     // specify loss-function and learning strategy
-    mnn::network<mnn::sequential> nn("lenet");
-    mnn::adagrad optimizer;
+    mnn::Network<mnn::Sequential> nn("lenet");
+    mnn::Adagrad optimizer;
 
     construct_net(nn, backend_type);
 
     std::cout << "start loading dataset..." << std::endl;
 
     // load MNIST dataset
-    std::vector<mnn::label_t> train_labels, test_labels;
-    std::vector<mnn::vec_t> train_images, test_images;
+    std::vector<mnn::Label> train_labels, test_labels;
+    std::vector<mnn::Vector> train_images, test_images;
 
     mnn::parse_mnist_labels(data_dir_path + "/train-labels.idx1-ubyte",
             &train_labels);
@@ -86,11 +83,11 @@ static void train_lenet(const std::string &data_dir_path, double learning_rate,
 
     std::cout << "start training model..." << std::endl;
 
-    mnn::text_progress disp(train_images.size());
-    mnn::timer t;
+    mnn::TextProgress disp(train_images.size());
+    mnn::Timer t;
 
-    optimizer.alpha *= std::min(mnn::float_t(4),
-            static_cast<mnn::float_t>(sqrt(n_minibatch) * learning_rate));
+    optimizer.alpha *= std::min(mnn::Float(4),
+            static_cast<mnn::Float>(sqrt(n_minibatch) * learning_rate));
 
     int epoch = 1;
     // create callback
@@ -98,7 +95,7 @@ static void train_lenet(const std::string &data_dir_path, double learning_rate,
         std::cout << "Epoch " << epoch << "/" << n_train_epochs << " finished. "
         << t.elapsed() << "s elapsed." << std::endl;
         ++epoch;
-        mnn::result res = nn.test(test_images, test_labels);
+        mnn::Result res = nn.test(test_images, test_labels);
         std::cout << res.num_success << "/" << res.num_total << std::endl;
 
         if (epoch <= n_train_epochs) {
@@ -111,7 +108,7 @@ static void train_lenet(const std::string &data_dir_path, double learning_rate,
     auto on_enumerate_minibatch = [&]() {disp += n_minibatch;};
 
     // training
-    nn.train<mnn::mse>(optimizer, train_images, train_labels, n_minibatch,
+    nn.train<mnn::Mse>(optimizer, train_images, train_labels, n_minibatch,
             n_train_epochs, on_enumerate_minibatch, on_enumerate_epoch);
 
     std::cout << "end training model." << std::endl;
@@ -120,12 +117,12 @@ static void train_lenet(const std::string &data_dir_path, double learning_rate,
     nn.test(test_images, test_labels).print_detail(std::cout);
 }
 
-static mnn::backend_t parse_backend_name(const std::string &name)
+static mnn::BackendType parse_backend_name(const std::string &name)
 {
     const std::array<const std::string, 5> names = { { "cpu", "gpu", } };
     for (size_t i = 0; i < names.size(); ++i) {
         if (name.compare(names[i]) == 0) {
-            return static_cast<mnn::backend_t>(i);
+            return static_cast<mnn::BackendType>(i);
         }
     }
     return mnn::default_engine();
@@ -149,7 +146,7 @@ int main(int argc, char **argv)
     int minibatch_size = 16;
     std::string data_path = "";
 
-    mnn::backend_t backend_type = mnn::default_engine();
+    mnn::BackendType backend_type = mnn::default_engine();
 
     if (argc == 2) {
         std::string argname(argv[1]);
@@ -213,7 +210,7 @@ int main(int argc, char **argv)
             << "Backend type: "     << backend_type   << std::endl;
     try {
         train_lenet(data_path, learning_rate, epochs, minibatch_size, backend_type);
-    } catch (mnn::nn_error &err) {
+    } catch (mnn::MnnError &err) {
         std::cerr << "Exception: " << err.what() << std::endl;
     }
     return 0;

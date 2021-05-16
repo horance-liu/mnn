@@ -12,15 +12,15 @@
 
 namespace mnn {
 
-struct adagrad: public stateful_optimizer<1> {
-    adagrad();
+struct Adagrad: public StatefulOptimizer<1> {
+    Adagrad();
 
-    void update(const vec_t &dW, vec_t &W, bool parallelize);
+    void update(const Vector &dW, Vector &W, bool parallelize);
 
-    float_t alpha;
+    Float alpha;
 
 private:
-    float_t eps;
+    Float eps;
 };
 
 }  // namespace mnn

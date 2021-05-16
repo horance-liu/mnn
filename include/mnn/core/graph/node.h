@@ -14,31 +14,31 @@
 namespace mnn {
 
 
-class node;
-class layer;
-class edge;
+class Node;
+class Layer;
+class Edge;
 
-typedef std::shared_ptr<edge> edgeptr_t;
+typedef std::shared_ptr<Edge> edgeptr_t;
 
-class node : public std::enable_shared_from_this<node> {
+class Node : public std::enable_shared_from_this<Node> {
  public:
-  node(size_t in_size, size_t out_size);
-  virtual ~node() {}
+  Node(size_t in_size, size_t out_size);
+  virtual ~Node() {}
 
   const std::vector<edgeptr_t> &prev() const;
   const std::vector<edgeptr_t> &next() const;
 
-  size_t prev_port(const edge &e) const;
-  size_t next_port(const edge &e) const;
+  size_t prev_port(const Edge &e) const;
+  size_t next_port(const Edge &e) const;
 
-  std::vector<node *> prev_nodes() const;
-  std::vector<node *> next_nodes() const;
+  std::vector<Node *> prev_nodes() const;
+  std::vector<Node *> next_nodes() const;
 
  protected:
-  node() = delete;
+  Node() = delete;
 
-  friend void connect(layer *head,
-                      layer *tail,
+  friend void connect(Layer *head,
+                      Layer *tail,
                       size_t head_index,
                       size_t tail_index);
 

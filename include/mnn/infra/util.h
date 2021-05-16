@@ -17,19 +17,19 @@
 
 namespace mnn {
 
-typedef size_t label_t;
+typedef size_t Label;
 
-typedef size_t layer_size_t;  // for backward compatibility
+typedef size_t LayerSize;  // for backward compatibility
 
-typedef std::vector<float_t, aligned_allocator<float_t, 64>> vec_t;
+typedef std::vector<Float, AlignedAllocator<Float, 64>> Vector;
 
-typedef std::vector<vec_t> tensor_t;
+typedef std::vector<Vector> Matrix;
 
-enum class net_phase { train, test };
+enum class NetPhase { TRAINING, TESTING };
 
-enum class padding {
-  valid,
-  same,
+enum class Padding {
+  VALID,
+  SAME,
 };
 
 template <typename T>
@@ -66,7 +66,7 @@ inline T sqr(T value) {
   return value * value;
 }
 
-inline bool isfinite(float_t x) { return x == x; }
+inline bool isfinite(Float x) { return x == x; }
 
 template <typename Container>
 inline bool has_infinite(const Container &c) {
@@ -97,10 +97,10 @@ inline std::string format_str(const char *fmt, ...) {
 }
 
 template <typename T>
-struct index3d {
-  index3d(T width, T height, T depth) { reshape(width, height, depth); }
+struct Index3d {
+  Index3d(T width, T height, T depth) { reshape(width, height, depth); }
 
-  index3d() : width_(0), height_(0), depth_(0) {}
+  Index3d() : width_(0), height_(0), depth_(0) {}
 
   void reshape(T width, T height, T depth) {
     width_  = width;
@@ -108,7 +108,7 @@ struct index3d {
     depth_  = depth;
 
     if ((int64_t)width * height * depth > std::numeric_limits<T>::max())
-      throw nn_error(format_str(
+      throw MnnError(format_str(
         "error while constructing layer: layer size too large for "
         "mnn\nWidthxHeightxChannels=%dx%dx%d >= max size of "
         "[%s](=%d)",
@@ -131,33 +131,33 @@ struct index3d {
   T depth_;
 };
 
-typedef index3d<size_t> shape3d;
+typedef Index3d<size_t> Shape3d;
 
 template <typename T>
-bool operator==(const index3d<T> &lhs, const index3d<T> &rhs) {
+bool operator==(const Index3d<T> &lhs, const Index3d<T> &rhs) {
   return (lhs.width_ == rhs.width_) && (lhs.height_ == rhs.height_) &&
          (lhs.depth_ == rhs.depth_);
 }
 
 template <typename T>
-bool operator!=(const index3d<T> &lhs, const index3d<T> &rhs) {
+bool operator!=(const Index3d<T> &lhs, const Index3d<T> &rhs) {
   return !(lhs == rhs);
 }
 
 template <typename Stream, typename T>
-Stream &operator<<(Stream &s, const index3d<T> &d) {
+Stream &operator<<(Stream &s, const Index3d<T> &d) {
   s << d.width_ << "x" << d.height_ << "x" << d.depth_;
   return s;
 }
 
 template <typename T>
-std::ostream &operator<<(std::ostream &s, const index3d<T> &d) {
+std::ostream &operator<<(std::ostream &s, const Index3d<T> &d) {
   s << d.width_ << "x" << d.height_ << "x" << d.depth_;
   return s;
 }
 
 template <typename Stream, typename T>
-Stream &operator<<(Stream &s, const std::vector<index3d<T>> &d) {
+Stream &operator<<(Stream &s, const std::vector<Index3d<T>> &d) {
   s << "[";
   for (size_t i = 0; i < d.size(); i++) {
     if (i) s << ",";
@@ -201,46 +201,46 @@ std::vector<Result> map_(const std::vector<T> &vec, Pred p) {
   return res;
 }
 
-enum class vector_type : int32_t {
+enum class VectorType : int32_t {
   // 0x0001XXX : in/out data
-  data = 0x0001000,  // input/output data, fed by other layer or input channel
+  DATA = 0x0001000,  // input/output data, fed by other layer or input channel
 
   // 0x0002XXX : trainable parameters, updated for each back propagation
-  weight = 0x0002000,
-  bias   = 0x0002001,
+  WEIGHT = 0x0002000,
+  BIAS   = 0x0002001,
 
-  label = 0x0004000,
-  aux   = 0x0010000  // layer-specific storage
+  LABEL = 0x0004000,
+  AUX   = 0x0010000  // layer-specific storage
 };
 
-inline std::ostream &operator<<(std::ostream &os, vector_type vtype) {
+inline std::ostream &operator<<(std::ostream &os, VectorType vtype) {
   os << to_string(vtype);
   return os;
 }
 
-inline vector_type operator&(vector_type lhs, vector_type rhs) {
-  return (vector_type)(static_cast<int32_t>(lhs) & static_cast<int32_t>(rhs));
+inline VectorType operator&(VectorType lhs, VectorType rhs) {
+  return (VectorType)(static_cast<int32_t>(lhs) & static_cast<int32_t>(rhs));
 }
 //
-inline bool is_trainable_weight(vector_type vtype) {
-  return (vtype & vector_type::weight) == vector_type::weight;
+inline bool is_trainable_weight(VectorType vtype) {
+  return (vtype & VectorType::WEIGHT) == VectorType::WEIGHT;
 }
 
-inline std::vector<vector_type> std_input_order(bool has_bias) {
+inline std::vector<VectorType> std_input_order(bool has_bias) {
   if (has_bias) {
-    return {vector_type::data, vector_type::weight, vector_type::bias};
+    return {VectorType::DATA, VectorType::WEIGHT, VectorType::BIAS};
   } else {
-    return {vector_type::data, vector_type::weight};
+    return {VectorType::DATA, VectorType::WEIGHT};
   }
 }
 
-inline void fill_tensor(tensor_t &tensor, float_t value) {
+inline void fill_tensor(Matrix &tensor, Float value) {
   for (auto &t : tensor) {
     vectorize::fill(&t[0], t.size(), value);
   }
 }
 
-inline void fill_tensor(tensor_t &tensor, float_t value, size_t size) {
+inline void fill_tensor(Matrix &tensor, Float value, size_t size) {
   for (auto &t : tensor) {
     t.resize(size, value);
   }
@@ -250,15 +250,15 @@ inline size_t conv_out_length(size_t in_length,
                               size_t window_size,
                               size_t stride,
                               size_t dilation,
-                              padding pad_type) {
+                              Padding pad_type) {
   size_t output_length;
 
-  if (pad_type == padding::same) {
+  if (pad_type == Padding::SAME) {
     output_length = in_length;
-  } else if (pad_type == padding::valid) {
+  } else if (pad_type == Padding::VALID) {
     output_length = in_length - dilation * window_size + dilation;
   } else {
-    throw nn_error("Not recognized pad_type.");
+    throw MnnError("Not recognized pad_type.");
   }
   return (output_length + stride - 1) / stride;
 }
@@ -267,15 +267,15 @@ inline size_t pool_out_length(size_t in_length,
                               size_t window_size,
                               size_t stride,
                               bool ceil_mode,
-                              padding pad_type) {
+                              Padding pad_type) {
   size_t output_length;
 
-  if (pad_type == padding::same) {
+  if (pad_type == Padding::SAME) {
     output_length = in_length;
-  } else if (pad_type == padding::valid) {
+  } else if (pad_type == Padding::VALID) {
     output_length = in_length - window_size + 1;
   } else {
-    throw nn_error("Not recognized pad_type.");
+    throw MnnError("Not recognized pad_type.");
   }
 
   float tmp = static_cast<float>((output_length + stride - 1)) / stride;

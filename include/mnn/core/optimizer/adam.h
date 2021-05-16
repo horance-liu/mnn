@@ -12,18 +12,18 @@
 
 namespace mnn {
 
-struct adam: public stateful_optimizer<2> {
-    adam();
-    void update(const vec_t &dW, vec_t &W, bool parallelize);
+struct Adam: public StatefulOptimizer<2> {
+    Adam();
+    void update(const Vector &dW, Vector &W, bool parallelize);
 
-    float_t alpha;  // learning rate
-    float_t b1;     // decay term
-    float_t b2;     // decay term
-    float_t b1_t;   // decay term power t
-    float_t b2_t;   // decay term power t
+    Float alpha;  // learning rate
+    Float b1;     // decay term
+    Float b2;     // decay term
+    Float b1_t;   // decay term power t
+    Float b2_t;   // decay term power t
 
 private:
-    float_t eps;
+    Float eps;
 };
 
 }  // namespace mnn

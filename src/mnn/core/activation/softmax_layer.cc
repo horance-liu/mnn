@@ -13,15 +13,15 @@
 
 namespace mnn {
 
-std::string softmax_layer::layer_type() const
+std::string SoftmaxLayer::layer_type() const
 {
     return "softmax-activation";
 }
 
-void softmax_layer::forward_activation(const vec_t &x, vec_t &y)
+void SoftmaxLayer::forward_activation(const Vector &x, Vector &y)
 {
-    const float_t alpha = *std::max_element(x.begin(), x.end());
-    float_t denominator(0);
+    const Float alpha = *std::max_element(x.begin(), x.end());
+    Float denominator(0);
     for (size_t j = 0; j < x.size(); j++) {
         y[j] = std::exp(x[j] - alpha);
         denominator += y[j];
@@ -31,27 +31,27 @@ void softmax_layer::forward_activation(const vec_t &x, vec_t &y)
     }
 }
 
-void softmax_layer::backward_activation(const vec_t &x, const vec_t &y,
-        vec_t &dx, const vec_t &dy)
+void SoftmaxLayer::backward_activation(const Vector &x, const Vector &y,
+        Vector &dx, const Vector &dy)
 {
     const size_t len = dy.size();
 
 #if HAS_CXX11_THREAD_LOCAL
     thread_local
 #endif
-    vec_t df(len, 0);
+    Vector df(len, 0);
     for (size_t j = 0; j < x.size(); j++) {
         for (size_t k = 0; k < x.size(); k++) {
-            df[k] = (k == j) ? y[j] * (float_t(1) - y[j]) : -y[k] * y[j];
+            df[k] = (k == j) ? y[j] * (Float(1) - y[j]) : -y[k] * y[j];
         }
         // dx = dy * (gradient of softmax)
         dx[j] = vectorize::dot(&dy[0], &df[0], len);
     }
 }
 
-std::pair<float_t, float_t> softmax_layer::scale() const
+std::pair<Float, Float> SoftmaxLayer::scale() const
 {
-    return std::make_pair(float_t(0), float_t(1));
+    return std::make_pair(Float(0), Float(1));
 }
 
 }  // namespace mnn

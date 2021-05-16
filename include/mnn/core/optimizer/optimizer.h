@@ -13,10 +13,10 @@
 
 namespace mnn {
 
-struct optimizer {
-    virtual void update(const vec_t &dW, vec_t &W, bool parallelize) = 0;
+struct Optimizer {
+    virtual void update(const Vector &dW, Vector &W, bool parallelize) = 0;
     virtual void reset() {}
-    virtual ~optimizer() {}
+    virtual ~Optimizer() {}
 };
 
 }  // namespace mnn

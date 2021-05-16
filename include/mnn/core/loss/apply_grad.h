@@ -13,18 +13,18 @@
 namespace mnn {
 
 template<typename E>
-vec_t gradient(const vec_t &y, const vec_t &t)
+Vector gradient(const Vector &y, const Vector &t)
 {
     assert(y.size() == t.size());
     return E::df(y, t);
 }
 
 template<typename E>
-std::vector<vec_t> gradient(
-        const std::vector<vec_t> &y,
-        const std::vector<vec_t> &t)
+std::vector<Vector> gradient(
+        const std::vector<Vector> &y,
+        const std::vector<Vector> &t)
 {
-    std::vector<vec_t> grads(y.size());
+    std::vector<Vector> grads(y.size());
 
     assert(y.size() == t.size());
 
@@ -35,16 +35,16 @@ std::vector<vec_t> gradient(
 }
 
 void apply_cost_if_defined(
-        std::vector<vec_t> &sample_gradient,
-        const std::vector<vec_t> &sample_cost);
+        std::vector<Vector> &sample_gradient,
+        const std::vector<Vector> &sample_cost);
 
 template<typename E>
-std::vector<tensor_t> gradient(const std::vector<tensor_t> &y,
-        const std::vector<tensor_t> &t, const std::vector<tensor_t> &t_cost)
+std::vector<Matrix> gradient(const std::vector<Matrix> &y,
+        const std::vector<Matrix> &t, const std::vector<Matrix> &t_cost)
 {
     const size_t sample_count = y.size();
 
-    std::vector<tensor_t> gradients(sample_count);
+    std::vector<Matrix> gradients(sample_count);
 
     assert(y.size() == t.size());
     assert(t_cost.empty() || t_cost.size() == t.size());

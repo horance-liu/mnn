@@ -10,14 +10,14 @@
 #define H216BE1CA_7DD2_49B6_9599_32B32814F109
 
 
-#include "mnn/core/graph/nodes.h"
+#include "mnn/core/graph/node_list.h"
 
 namespace mnn {
 
-class sequential: public nodes {
+class Sequential: public NodeList {
 private:
-    void backward(const std::vector<tensor_t> &first) override;
-    std::vector<tensor_t> forward(const std::vector<tensor_t> &first) override;
+    void backward(const std::vector<Matrix> &first) override;
+    std::vector<Matrix> forward(const std::vector<Matrix> &first) override;
 
 public:
     template<typename T>
@@ -36,10 +36,10 @@ public:
     }
 
 private:
-    friend class nodes;
+    friend class NodeList;
 
     void check_connectivity();
-    std::vector<tensor_t> normalize_out(const std::vector<const tensor_t*> &out);
+    std::vector<Matrix> normalize_out(const std::vector<const Matrix*> &out);
 };
 
 } // namespace mnn

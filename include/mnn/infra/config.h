@@ -24,9 +24,9 @@
 namespace mnn {
 
 #ifdef MNN_USE_DOUBLE
-typedef double float_t;
+typedef double Float;
 #else
-typedef float float_t;
+typedef float Float;
 #endif
 
 }  // namespace mnn

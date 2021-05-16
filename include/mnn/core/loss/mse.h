@@ -12,10 +12,10 @@
 
 namespace mnn {
 
-class mse {
+class Mse {
  public:
-  static float_t f(const vec_t &y, const vec_t &t);
-  static vec_t df(const vec_t &y, const vec_t &t);
+  static Float f(const Vector &y, const Vector &t);
+  static Vector df(const Vector &y, const Vector &t);
 };
 
 }  // namespace mnn

@@ -10,19 +10,19 @@
 
 namespace mnn {
 
-connection_table::connection_table() : rows_(0), cols_(0)
+ConnectionTable::ConnectionTable() : rows_(0), cols_(0)
 {
 }
-connection_table::connection_table(const bool *ar, size_t rows, size_t cols) : connected_(
+ConnectionTable::ConnectionTable(const bool *ar, size_t rows, size_t cols) : connected_(
         rows * cols), rows_(rows), cols_(cols)
 {
     std::copy(ar, ar + rows * cols, connected_.begin());
 }
-connection_table::connection_table(size_t ngroups, size_t rows, size_t cols) : connected_(
+ConnectionTable::ConnectionTable(size_t ngroups, size_t rows, size_t cols) : connected_(
         rows * cols, false), rows_(rows), cols_(cols)
 {
     if (rows % ngroups || cols % ngroups) {
-        throw nn_error("invalid group size");
+        throw MnnError("invalid group size");
     }
 
     size_t row_group = rows / ngroups;
@@ -40,36 +40,36 @@ connection_table::connection_table(size_t ngroups, size_t rows, size_t cols) : c
     }
 }
 
-bool connection_table::is_connected(size_t x, size_t y) const
+bool ConnectionTable::is_connected(size_t x, size_t y) const
 {
     return is_empty() ? true : connected_[y * cols_ + x];
 }
 
-bool connection_table::is_empty() const
+bool ConnectionTable::is_empty() const
 {
     return rows_ == 0 && cols_ == 0;
 }
 
-conv_params& Params::conv()
+ConvParams& Params::conv()
 {
-    return *(static_cast<conv_params*>(this));
+    return *(static_cast<ConvParams*>(this));
 }
 
 Conv2dPadding::Conv2dPadding()
 {
 }
 
-Conv2dPadding::Conv2dPadding(const conv_params &params) : params_(params)
+Conv2dPadding::Conv2dPadding(const ConvParams &params) : params_(params)
 {
 }
 
-void Conv2dPadding::copy_and_pad_input(const tensor_t &in, tensor_t &out)
+void Conv2dPadding::copy_and_pad_input(const Matrix &in, Matrix &out)
 {
-    if (params_.pad_type == padding::valid) {
+    if (params_.pad_type == Padding::VALID) {
         return;
     }
 
-    tensor_t buf(in.size());
+    Matrix buf(in.size());
 
     for_i(true, buf.size(), [&](size_t sample) {
         // alloc temporary buffer.
@@ -77,9 +77,9 @@ void Conv2dPadding::copy_and_pad_input(const tensor_t &in, tensor_t &out)
 
         // make padded version in order to avoid corner-case in fprop/bprop
         for (size_t c = 0; c < params_.in.depth_; c++) {
-            float_t *pimg = &buf[sample][params_.in_padded.get_index(
+            Float *pimg = &buf[sample][params_.in_padded.get_index(
                     params_.weight.width_ / 2, params_.weight.height_ / 2, c)];
-            const float_t *pin = &in[sample][params_.in.get_index(0, 0, c)];
+            const Float *pin = &in[sample][params_.in.get_index(0, 0, c)];
 
             for (size_t y = 0; y < params_.in.height_; y++) {
                 std::copy(pin, pin + params_.in.width_, pimg);
@@ -92,23 +92,23 @@ void Conv2dPadding::copy_and_pad_input(const tensor_t &in, tensor_t &out)
     out = buf;
 }
 
-void Conv2dPadding::copy_and_unpad_delta(const tensor_t &delta,
-        tensor_t &delta_unpadded)
+void Conv2dPadding::copy_and_unpad_delta(const Matrix &delta,
+        Matrix &delta_unpadded)
 {
-    if (params_.pad_type == padding::valid) {
+    if (params_.pad_type == Padding::VALID) {
         return;
     }
 
-    tensor_t buf(delta.size());
+    Matrix buf(delta.size());
 
     for_i(true, buf.size(), [&](size_t sample) {
         // alloc temporary buffer.
         buf[sample].resize(params_.in.size());
 
         for (size_t c = 0; c < params_.in.depth_; c++) {
-            const float_t *pin = &delta[sample][params_.in_padded.get_index(
+            const Float *pin = &delta[sample][params_.in_padded.get_index(
                     params_.weight.width_ / 2, params_.weight.height_ / 2, c)];
-            float_t *pdst = &buf[sample][params_.in.get_index(0, 0, c)];
+            Float *pdst = &buf[sample][params_.in.get_index(0, 0, c)];
 
             for (size_t y = 0; y < params_.in.height_; y++) {
                 std::copy(pin, pin + params_.in.width_, pdst);

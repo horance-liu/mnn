@@ -12,9 +12,9 @@
 
 namespace mnn {
 
-class text_progress {
+class TextProgress {
 public:
-    explicit text_progress(size_t expected_count_, std::ostream &os =
+    explicit TextProgress(size_t expected_count_, std::ostream &os =
             std::cout, const std::string &s1 = "\n",  // leading strings
             const std::string &s2 = "", const std::string &s3 = "");
 

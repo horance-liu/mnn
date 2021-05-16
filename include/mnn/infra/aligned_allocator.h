@@ -11,12 +11,12 @@
 #include <stdlib.h>
 #include <string>
 #include <utility>
-#include "mnn/infra/nn_error.h"
+#include "mnn/infra/mnn_error.h"
 
 namespace mnn {
 
 template <typename T, std::size_t alignment>
-class aligned_allocator {
+class AlignedAllocator {
  public:
   typedef T value_type;
   typedef T *pointer;
@@ -28,13 +28,13 @@ class aligned_allocator {
 
   template <typename U>
   struct rebind {
-    typedef aligned_allocator<U, alignment> other;
+    typedef AlignedAllocator<U, alignment> other;
   };
 
-  aligned_allocator() {}
+  AlignedAllocator() {}
 
   template <typename U>
-  aligned_allocator(const aligned_allocator<U, alignment> &) {}
+  AlignedAllocator(const AlignedAllocator<U, alignment> &) {}
 
   const_pointer address(const_reference value) const {
     return std::addressof(value);
@@ -44,7 +44,7 @@ class aligned_allocator {
 
   pointer allocate(size_type size, const void * = nullptr) {
     void *p = aligned_alloc(alignment, sizeof(T) * size);
-    if (!p && size > 0) throw nn_error("failed to allocate");
+    if (!p && size > 0) throw MnnError("failed to allocate");
     return static_cast<pointer>(p);
   }
 
@@ -92,14 +92,14 @@ class aligned_allocator {
 };
 
 template <typename T1, typename T2, std::size_t alignment>
-inline bool operator==(const aligned_allocator<T1, alignment> &,
-                       const aligned_allocator<T2, alignment> &) {
+inline bool operator==(const AlignedAllocator<T1, alignment> &,
+                       const AlignedAllocator<T2, alignment> &) {
   return true;
 }
 
 template <typename T1, typename T2, std::size_t alignment>
-inline bool operator!=(const aligned_allocator<T1, alignment> &,
-                       const aligned_allocator<T2, alignment> &) {
+inline bool operator!=(const AlignedAllocator<T1, alignment> &,
+                       const AlignedAllocator<T2, alignment> &) {
   return false;
 }
 

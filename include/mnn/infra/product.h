@@ -19,7 +19,7 @@ namespace detail {
 
 // traits
 template <typename T>
-struct scalar_generic {
+struct GenericScalar {
   typedef T register_type;
   typedef T value_type;
   enum { unroll_size = 1 };
@@ -177,17 +177,6 @@ MNN_MUST_INLINE void add(const typename T::value_type *src,
   }
 }
 
-// TODO(beru): documentation
-/**
- *
- * @tparam T
- * @tparam src_aligned
- * @tparam dst_aligned
- * @param src
- * @param c
- * @param size
- * @param dst
- */
 template <typename T, typename src_aligned, typename dst_aligned>
 MNN_MUST_INLINE void muladd(const typename T::value_type *src,
                             typename T::value_type c,
@@ -277,9 +266,9 @@ void fill(T *dst, size_t size, T value) {
 
 
 #ifdef MNN_USE_DOUBLE
-#define MNN_VECTORIZE_TYPE detail::scalar_generic<double>
+#define MNN_VECTORIZE_TYPE detail::GenericScalar<double>
 #else
-#define MNN_VECTORIZE_TYPE detail::scalar_generic<float>
+#define MNN_VECTORIZE_TYPE detail::GenericScalar<float>
 #endif
 
 }  // namespace detail

@@ -12,14 +12,14 @@
 
 namespace mnn {
 
-class partial_connected_layer: public layer {
+class PartialConnectedLayer: public Layer {
 public:
     typedef std::vector<std::pair<size_t, size_t>> io_connections;
     typedef std::vector<std::pair<size_t, size_t>> wi_connections;
     typedef std::vector<std::pair<size_t, size_t>> wo_connections;
 
-    partial_connected_layer(size_t in_dim, size_t out_dim, size_t weight_dim,
-            size_t bias_dim, float_t scale_factor = float_t { 1 });
+    PartialConnectedLayer(size_t in_dim, size_t out_dim, size_t weight_dim,
+            size_t bias_dim, Float scale_factor = Float { 1 });
 
     size_t param_size() const;
     size_t fan_in_size() const override;
@@ -31,14 +31,14 @@ public:
     void connect_bias(size_t bias_index, size_t output_index);
 
     void forward_propagation(
-            const std::vector<tensor_t*> &in_data,
-            std::vector<tensor_t*> &out_data) override;
+            const std::vector<Matrix*> &in_data,
+            std::vector<Matrix*> &out_data) override;
 
     void back_propagation(
-            const std::vector<tensor_t*> &in_data,
-            const std::vector<tensor_t*> &out_data,
-            std::vector<tensor_t*> &out_grad,
-            std::vector<tensor_t*> &in_grad)override;
+            const std::vector<Matrix*> &in_data,
+            const std::vector<Matrix*> &out_data,
+            std::vector<Matrix*> &out_grad,
+            std::vector<Matrix*> &in_grad)override;
 
 protected:
     std::vector<io_connections> weight2io_;  // weight_id -> [(in_id, out_id)]
@@ -46,7 +46,7 @@ protected:
     std::vector<wo_connections> in2wo_;      // in_id -> [(weight_id, out_id)]
     std::vector<std::vector<size_t>> bias2out_;
     std::vector<size_t> out2bias_;
-    float_t scale_factor_;
+    Float scale_factor_;
 };
 
 }  // namespace mnn
