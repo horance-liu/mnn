@@ -69,7 +69,7 @@ static void train_lenet(const std::string &data_dir_path, double learning_rate,
 
     construct_net(nn, backend_type);
 
-    std::cout << "load models..." << std::endl;
+    std::cout << "start loading dataset..." << std::endl;
 
     // load MNIST dataset
     std::vector<mnn::label_t> train_labels, test_labels;
@@ -84,7 +84,7 @@ static void train_lenet(const std::string &data_dir_path, double learning_rate,
     mnn::parse_mnist_images(data_dir_path + "/t10k-images.idx3-ubyte",
             &test_images, -1.0, 1.0, 2, 2);
 
-    std::cout << "start training" << std::endl;
+    std::cout << "start training model..." << std::endl;
 
     mnn::text_progress disp(train_images.size());
     mnn::timer t;
@@ -101,23 +101,20 @@ static void train_lenet(const std::string &data_dir_path, double learning_rate,
         mnn::result res = nn.test(test_images, test_labels);
         std::cout << res.num_success << "/" << res.num_total << std::endl;
 
-        if (epoch == n_train_epochs) {
-            return;
+        if (epoch <= n_train_epochs) {
+            disp.restart(train_images.size());
         }
 
-        disp.restart(train_images.size());
         t.restart();
     };
 
     auto on_enumerate_minibatch = [&]() {disp += n_minibatch;};
 
-    std::cout << "start training..." << std::endl;
-
     // training
     nn.train<mnn::mse>(optimizer, train_images, train_labels, n_minibatch,
             n_train_epochs, on_enumerate_minibatch, on_enumerate_epoch);
 
-    std::cout << "end training." << std::endl;
+    std::cout << "end training model." << std::endl;
 
     // test and show results
     nn.test(test_images, test_labels).print_detail(std::cout);
