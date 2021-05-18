@@ -47,7 +47,6 @@ function(mnn_status text)
   endif()
 endfunction()
 
-################################################################################################
 # Function merging lists of compiler flags to single string.
 # Usage:
 #   mnn_merge_flag_lists(out_variable <list1> [<list2>] [<list3>] ...)
@@ -63,7 +62,6 @@ function(mnn_merge_flag_lists out_var)
   set(${out_var} ${__result} PARENT_SCOPE)
 endfunction()
 
-#
 # Prints accumulated mnn configuration summary
 function(mnn_print_configuration_summary)
     mnn_merge_flag_lists(__flags_rel CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS)

@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 project(mnn VERSION 1.0 LANGUAGES C CXX)
 
-#
 # Change the default build type from Debug to Release
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "No build type specified; defaulting to CMAKE_BUILD_TYPE=Release.")
@@ -10,13 +9,10 @@ if(NOT CMAKE_BUILD_TYPE)
         FORCE)
 else(NOT CMAKE_BUILD_TYPE)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message("==========================================================================================")
         message(STATUS "Build type: Debug. Performance will be terrible!")
-        message("==========================================================================================")
     endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif(NOT CMAKE_BUILD_TYPE)
 
-#
 # Define user options
 option(USE_SSE        "Build mnn with SSE library support"            ON)
 option(USE_AVX        "Build mnn with AVX library support"            ON)
@@ -36,10 +32,7 @@ endif()
 find_package(TBB QUIET)
 if(USE_TBB AND TBB_FOUND)
     message(STATUS "Found Intel TBB: ${TBB_INCLUDE_DIR}")
-    # In case that TBB is found we force to disable OpenMP since
-    # mnn does not support mutiple multithreading backends.
     set(USE_OMP OFF)
-    #TODO: add definitions in configure
     add_definitions(-DMNN_USE_TBB)
     include_directories(${TBB_INCLUDE_DIRS})
     link_directories(${TBB_LIBRARY_DIRS})
@@ -143,7 +136,6 @@ endif(BUILD_EXAMPLE)
 if(BUILD_TEST)
     add_subdirectory(test)
 endif(BUILD_TEST)
-
 
 # Summary
 include(cmake/summary.cmake)
