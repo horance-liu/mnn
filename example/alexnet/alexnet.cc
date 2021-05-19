@@ -9,30 +9,33 @@
 #include <string>
 #include "mnn/mnn.h"
 
-class alexnet: public mnn::Network<mnn::Sequential> {
+namespace mnn {
+
+class AlexNet: public Network<Sequential> {
 public:
-    explicit alexnet(const std::string &name = "")
-        : mnn::Network<mnn::Sequential>(name)
+    explicit AlexNet(const std::string &name = "")
+        : Network<mnn::Sequential>(name)
     {
+        add(ConvolutionalLayer(224, 224, 11, 11, 3, 64, mnn::Padding::VALID, true, 4, 4));
+        add(ReluLayer(54, 54, 64));
+        add(AveragePoolingLayer(54, 54, 64, 2));
 
-        using relu = mnn::activation::relu;
-        using conv = mnn::layer::conv;
-        using ave_pool = mnn::layer::ave_pool;
-
-        *this   << conv(224, 224, 11, 11, 3, 64, mnn::Padding::VALID, true, 4, 4)
-                << relu(54, 54, 64) << ave_pool(54, 54, 64, 2)
-                << conv(27, 27, 5, 5, 64, 192, mnn::Padding::VALID, true, 1, 1)
-                << relu(23, 23, 192) << ave_pool(23, 23, 192, 1)
-                << conv(23, 23, 3, 3, 192, 384, mnn::Padding::VALID, true, 1, 1)
-                << relu(21, 21, 384)
-                << conv(21, 21, 3, 3, 384, 256, mnn::Padding::VALID, true, 1, 1)
-                << relu(19, 19, 256)
-                << conv(19, 19, 3, 3, 256, 256, mnn::Padding::VALID, true, 1, 1)
-                << relu(17, 17, 256) << ave_pool(17, 17, 256, 1);
+        add(ConvolutionalLayer(27, 27, 5, 5, 64, 192, mnn::Padding::VALID, true, 1, 1));
+        add(ReluLayer(23, 23, 192));
+        add(AveragePoolingLayer(23, 23, 192, 1));
+        add(ConvolutionalLayer(23, 23, 3, 3, 192, 384, mnn::Padding::VALID, true, 1, 1));
+        add(ReluLayer(21, 21, 384));
+        add(ConvolutionalLayer(21, 21, 3, 3, 384, 256, mnn::Padding::VALID, true, 1, 1));
+        add(ReluLayer(19, 19, 256));
+        add(ConvolutionalLayer(19, 19, 3, 3, 256, 256, mnn::Padding::VALID, true, 1, 1));
+        add(ReluLayer(17, 17, 256));
+        add(AveragePoolingLayer(17, 17, 256, 1));
     }
 };
 
+} // namespace mnn
+
 int main(int argc, char **argv)
 {
-    alexnet net("alexnet");
+    mnn::AlexNet net("alexnet");
 }

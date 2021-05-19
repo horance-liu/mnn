@@ -32,25 +32,3 @@
 #include "mnn/infra/weight_init.h"
 #include "mnn/infra/text_progress.h"
 #include "mnn/infra/timer.h"
-
-namespace mnn {
-
-namespace layer {
-
-using conv = mnn::ConvolutionalLayer;
-using ave_pool = mnn::AveragePoolingLayer;
-using fc = mnn::FullyConnectedLayer;
-
-}  // namespace layer
-
-namespace activation {
-
-using sigmoid = mnn::SigmoidLayer;
-using tanh = mnn::TanhLayer;
-using relu = mnn::ReluLayer;
-using softmax = mnn::SoftmaxLayer;
-
-}  // namespace activation
-
-}  // namespace mnn
-

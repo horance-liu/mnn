@@ -9,6 +9,7 @@
 #pragma once
 
 #include <sstream>
+#include <algorithm>
 
 #include "mnn/infra/aligned_allocator.h"
 #include "mnn/infra/parallel_for.h"

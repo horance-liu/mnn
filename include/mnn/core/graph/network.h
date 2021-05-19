@@ -51,13 +51,7 @@ struct Result {
 };
 
 template <typename NetType>
-class Network;
-
-template <typename Layer>
-Network<Sequential> &operator<<(Network<Sequential> &n, Layer &&l);
-
-template <typename NetType>
-class Network {
+class Network : NetType {
  public:
   typedef typename std::vector<Layer *>::iterator iterator;
   typedef typename std::vector<Layer *>::const_iterator const_iterator;
@@ -66,7 +60,12 @@ class Network {
     : name_(name), stop_training_(false) {}
 
   std::string name() const { return name_; }
-  void init_weight() { net_.setup(true); }
+  void init_weight() { NetType::setup(true); }
+
+  template <typename Layer>
+  void add(Layer &&layer) {
+      NetType::add(std::forward<Layer>(layer));
+  }
 
   // convenience wrapper for the function below
   template <typename E>
@@ -82,12 +81,12 @@ class Network {
              const std::vector<Matrix> &t,
              const std::vector<Matrix> &t_cost) {
     std::vector<Matrix> delta = gradient<E>(out, t, t_cost);
-    NodeList& nodes = net_;
+    NodeList& nodes = *this;
     nodes.backward(delta);
   }
 
   Vector fprop(const Vector &in) {
-    if (in.size() != (size_t)in_data_size()) data_mismatch(**net_.begin(), in);
+    if (in.size() != (size_t)in_data_size()) data_mismatch(**NetType::begin(), in);
     std::vector<Matrix> a(1);
     a[0].emplace_back(in);
     return fprop(a)[0][0];
@@ -99,12 +98,12 @@ class Network {
   }
 
   std::vector<Matrix> fprop(const std::vector<Matrix> &in) {
-      NodeList& nodes = net_;
+      NodeList& nodes = *this;
     return nodes.forward(in);
   }
 
   void update_weights(Optimizer *opt) {
-    for (auto l : net_) {
+    for (auto l : *this) {
       l->update_weight(opt);
     }
   }
@@ -187,7 +186,7 @@ class Network {
   }
 
   void set_netphase(NetPhase phase) {
-    for (auto n : net_) {
+    for (auto n : *this) {
       n->set_context(phase);
     }
   }
@@ -208,29 +207,29 @@ class Network {
     return test_result;
   }
 
-  size_t layer_size() const { return net_.size(); }
+  size_t layer_size() const { return NetType::size(); }
 
-  size_t out_data_size() const { return net_.out_data_size(); }
-  size_t in_data_size() const { return net_.in_data_size(); }
+  size_t out_data_size() const { return NetType::out_data_size(); }
+  size_t in_data_size() const { return NetType::in_data_size(); }
 
   template <typename WeightInit>
   Network &weight_init(const WeightInit &f) {
     auto ptr = std::make_shared<WeightInit>(f);
-    for (auto &l : net_) l->weight_init(ptr);
+    for (auto &l : *this) l->weight_init(ptr);
     return *this;
   }
 
   template <typename BiasInit>
   Network &bias_init(const BiasInit &f) {
     auto ptr = std::make_shared<BiasInit>(f);
-    for (auto &l : net_) l->bias_init(ptr);
+    for (auto &l : *this) l->bias_init(ptr);
     return *this;
   }
 
-  iterator begin() { return net_.begin(); }
-  iterator end() { return net_.end(); }
-  const_iterator begin() const { return net_.begin(); }
-  const_iterator end() const { return net_.end(); }
+  iterator begin() { return NetType::begin(); }
+  iterator end() { return NetType::end(); }
+  const_iterator begin() const { return NetType::begin(); }
+  const_iterator end() const { return NetType::end(); }
 
  protected:
   Float fprop_max(const Vector &in) {
@@ -262,9 +261,9 @@ class Network {
            const std::vector<Matrix> &t_cost = std::vector<Matrix>()) {
     check_target_cost_matrix(desired_outputs, t_cost);
     set_netphase(NetPhase::TRAINING);
-    net_.setup(reset_weights);
+    NetType::setup(reset_weights);
 
-    for (auto n : net_) n->set_parallelize(true);
+    for (auto n : *this) n->set_parallelize(true);
     optimizer.reset();
     stop_training_ = false;
     in_batch_.resize(batch_size);
@@ -293,7 +292,7 @@ class Network {
                   const Matrix *t_cost) {
     if (size == 1) {
       bprop<E>(fprop(in[0]), t[0], t_cost ? t_cost[0] : Matrix());
-      net_.update_weights(&optimizer);
+      NetType::update_weights(&optimizer);
     } else {
       train_onebatch<E>(optimizer, in, t, size, nbThreads, t_cost);
     }
@@ -314,7 +313,7 @@ class Network {
              : std::vector<Matrix>();
 
     bprop<E>(fprop(in_batch_), t_batch_, t_cost_batch);
-    net_.update_weights(&optimizer);
+    NetType::update_weights(&optimizer);
   }
 
   void check_target_cost_matrix(const std::vector<Matrix> &t,
@@ -377,20 +376,13 @@ class Network {
                         std::vector<Matrix> &normalized) {
     std::vector<Vector> vec;
     normalized.reserve(inputs.size());
-    net_.label2vec(inputs, vec);
+    NetType::label2vec(inputs, vec);
     normalize_tensor(vec, normalized);
   }
 
   std::string name_;
-  NetType net_;
   bool stop_training_;
   std::vector<Matrix> in_batch_;
   std::vector<Matrix> t_batch_;
 };
-
-template <typename Layer>
-Network<Sequential> &operator<<(Network<Sequential> &n, Layer &&l) {
-  n.net_.add(std::forward<Layer>(l));
-  return n;
-}
 }  // namespace mnn

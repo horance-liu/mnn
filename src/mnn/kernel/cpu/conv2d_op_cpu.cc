@@ -47,26 +47,26 @@ void conv2d_op_internal(const Matrix &in_data, const Vector &W,
                             const Float *pw_element = pw;
                             Float sum {0};
                             // should be optimized for small kernel(3x3,5x5)
-            for (size_t wy = 0; wy < kh; wy++) {    // NOLINT
-                for (size_t wx = 0; wx < kw; wx++) {  // NOLINT
-                    sum += pw_element[wx] * pin_element[wx * w_dilation];
+                            for (size_t wy = 0; wy < kh; wy++) {    // NOLINT
+                                for (size_t wx = 0; wx < kw; wx++) {  // NOLINT
+                                    sum += pw_element[wx] * pin_element[wx * w_dilation];
+                                }
+                                pw_element += kw;
+                                pin_element += iw * h_dilation;
+                            }
+                            pout[x] += sum;
+                            pin_line += elem_stride;
+                        }
+                        pout += ow;
+                        pin += line_stride;
+                    }
                 }
-                pw_element += kw;
-                pin_element += iw * h_dilation;
+                if (params.has_bias) {
+                    vectorize::add(bias[o], out_area, pa);
+                }
             }
-            pout[x] += sum;
-            pin_line += elem_stride;
         }
-        pout += ow;
-        pin += line_stride;
-    }
-}
-if (params.has_bias) {
-    vectorize::add(bias[o], out_area, pa);
-}
-}
-}
-}, 0u);
+    }, 0u);
 }
 
 }  // namespace kernels
